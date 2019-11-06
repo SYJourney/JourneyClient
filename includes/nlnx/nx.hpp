@@ -1,6 +1,6 @@
-/////////////////////////////////////////////////////////////////////////////
-// This file is part of the Journey MMORPG client                           //
-// Copyright © 2015-2016 Daniel Allendorf                                   //
+//////////////////////////////////////////////////////////////////////////////
+// NoLifeNx - Part of the NoLifeStory project                               //
+// Copyright Â© 2013 Peter Atashian                                          //
 //                                                                          //
 // This program is free software: you can redistribute it and/or modify     //
 // it under the terms of the GNU Affero General Public License as           //
@@ -15,17 +15,19 @@
 // You should have received a copy of the GNU Affero General Public License //
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.    //
 //////////////////////////////////////////////////////////////////////////////
+#pragma once
+#include "nxfwd.hpp"
 
-//Define things here.
+namespace nl
+{
+	namespace nx
+	{
+		// Pre-defined nodes to access standard MapleStory style data
+		// Make sure you called load_all first
+		extern node base, character, effect, etc, item, map, map001, mob, morph, npc, quest, reactor, skill, sound, string, tamingmob, ui;
 
-// JOURNEY_USE_ASIO : Use asio for networking, if not defined use Winsock.
-//#define JOURNEY_USE_ASIO
-
-// JOURNEY_USE_XXHASH : Use xxhash for file check (additional dependency)
-//#define JOURNEY_USE_XXHASH
-
-// JOURNEY_USE_CRYPTO : Use cryptography for communication with the server.
-#define JOURNEY_USE_CRYPTO
-
-// JOURNEY_PRINT_WARNINGS : Print warnings and minor errors to the console.
-#define JOURNEY_PRINT_WARNINGS
+		// Loads the pre-defined nodes from a standard setup of nx files for MapleStory
+		// Only call this function once
+		void load_all();
+	}
+}

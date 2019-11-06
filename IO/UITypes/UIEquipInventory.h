@@ -1,36 +1,37 @@
-/////////////////////////////////////////////////////////////////////////////
-// This file is part of the Journey MMORPG client                           //
-// Copyright © 2015-2016 Daniel Allendorf                                   //
-//                                                                          //
-// This program is free software: you can redistribute it and/or modify     //
-// it under the terms of the GNU Affero General Public License as           //
-// published by the Free Software Foundation, either version 3 of the       //
-// License, or (at your option) any later version.                          //
-//                                                                          //
-// This program is distributed in the hope that it will be useful,          //
-// but WITHOUT ANY WARRANTY; without even the implied warranty of           //
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            //
-// GNU Affero General Public License for more details.                      //
-//                                                                          //
-// You should have received a copy of the GNU Affero General Public License //
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.    //
-//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//	This file is part of the continued Journey MMORPG client					//
+//	Copyright (C) 2015-2019  Daniel Allendorf, Ryan Payton						//
+//																				//
+//	This program is free software: you can redistribute it and/or modify		//
+//	it under the terms of the GNU Affero General Public License as published by	//
+//	the Free Software Foundation, either version 3 of the License, or			//
+//	(at your option) any later version.											//
+//																				//
+//	This program is distributed in the hope that it will be useful,				//
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of				//
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the				//
+//	GNU Affero General Public License for more details.							//
+//																				//
+//	You should have received a copy of the GNU Affero General Public License	//
+//	along with this program.  If not, see <https://www.gnu.org/licenses/>.		//
+//////////////////////////////////////////////////////////////////////////////////
 #pragma once
+
 #include "../UIDragElement.h"
 
 #include "../Components/EquipTooltip.h"
 #include "../Components/Icon.h"
-
-#include "../../Character/Inventory/Inventory.h"
 #include "../../Template/EnumMap.h"
 
-namespace jrc
+#include "../../Character/Inventory/Inventory.h"
+
+namespace ms
 {
 	// The Equip inventory.
 	class UIEquipInventory : public UIDragElement<PosEQINV>
 	{
 	public:
-		static constexpr Type TYPE = EQUIPINVENTORY;
+		static constexpr Type TYPE = UIElement::Type::EQUIPINVENTORY;
 		static constexpr bool FOCUSED = false;
 		static constexpr bool TOGGLED = true;
 
@@ -40,13 +41,14 @@ namespace jrc
 
 		void toggle_active() override;
 		void doubleclick(Point<int16_t> position) override;
-		void send_icon(const Icon& icon, Point<int16_t> position) override;
+		bool send_icon(const Icon& icon, Point<int16_t> position) override;
 		Cursor::State send_cursor(bool pressed, Point<int16_t> position) override;
+		void send_key(std::int32_t keycode, bool pressed, bool escape) override;
 
-		void modify(int16_t pos, int8_t mode, int16_t arg);
+		void modify(std::int16_t pos, std::int8_t mode, std::int16_t arg);
 
 	protected:
-		Button::State button_pressed(uint16_t buttonid) override;
+		Button::State button_pressed(std::uint16_t buttonid) override;
 
 	private:
 		void show_equip(Equipslot::Id slot);
@@ -58,18 +60,21 @@ namespace jrc
 		class EquipIcon : public Icon::Type
 		{
 		public:
-			EquipIcon(int16_t source);
+			EquipIcon(std::int16_t source);
 
 			void drop_on_stage() const override;
-			void drop_on_equips(Equipslot::Id) const override {}
-			void drop_on_items(InventoryType::Id tab, Equipslot::Id eqslot, int16_t slot, bool equip) const override;
+			void drop_on_equips(Equipslot::Id slot) const override;
+			bool drop_on_items(InventoryType::Id tab, Equipslot::Id eqslot, std::int16_t slot, bool equip) const override;
+			void drop_on_bindings(Point<int16_t>, bool) const override {}
+			void set_count(std::int16_t) override {}
 
 		private:
-			int16_t source;
+			std::int16_t source;
 		};
 
 		enum Buttons
 		{
+			BT_CLOSE,
 			BT_TOGGLEPETS
 		};
 

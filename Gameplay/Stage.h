@@ -1,21 +1,22 @@
-//////////////////////////////////////////////////////////////////////////////
-// This file is part of the Journey MMORPG client                           //
-// Copyright © 2015-2016 Daniel Allendorf                                   //
-//                                                                          //
-// This program is free software: you can redistribute it and/or modify     //
-// it under the terms of the GNU Affero General Public License as           //
-// published by the Free Software Foundation, either version 3 of the       //
-// License, or (at your option) any later version.                          //
-//                                                                          //
-// This program is distributed in the hope that it will be useful,          //
-// but WITHOUT ANY WARRANTY; without even the implied warranty of           //
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            //
-// GNU Affero General Public License for more details.                      //
-//                                                                          //
-// You should have received a copy of the GNU Affero General Public License //
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.    //
-//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//	This file is part of the continued Journey MMORPG client					//
+//	Copyright (C) 2015-2019  Daniel Allendorf, Ryan Payton						//
+//																				//
+//	This program is free software: you can redistribute it and/or modify		//
+//	it under the terms of the GNU Affero General Public License as published by	//
+//	the Free Software Foundation, either version 3 of the License, or			//
+//	(at your option) any later version.											//
+//																				//
+//	This program is distributed in the hope that it will be useful,				//
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of				//
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the				//
+//	GNU Affero General Public License for more details.							//
+//																				//
+//	You should have received a copy of the GNU Affero General Public License	//
+//	along with this program.  If not, see <https://www.gnu.org/licenses/>.		//
+//////////////////////////////////////////////////////////////////////////////////
 #pragma once
+
 #include "Camera.h"
 #include "Spawn.h"
 
@@ -29,6 +30,7 @@
 #include "Maplemap/MapReactors.h"
 #include "Maplemap/MapNpcs.h"
 #include "Maplemap/MapDrops.h"
+#include "Maplemap/MapEffect.h"
 #include "Physics/Physics.h"
 
 #include "../Character/Player.h"
@@ -36,7 +38,7 @@
 #include "../Template/TimedQueue.h"
 #include "../Template/Singleton.h"
 
-namespace jrc
+namespace ms
 {
 	class Stage : public Singleton<Stage>
 	{
@@ -46,11 +48,11 @@ namespace jrc
 		void init();
 
 		// Loads the map to display. 
-		void load(int32_t mapid, int8_t portalid);
+		void load(std::int32_t mapid, std::int8_t portalid);
 		// Remove all map objects and graphics.
 		void clear();
 
-		// Contruct the player from a character entry.
+		// Construct the player from a character entry.
 		void loadplayer(const CharEntry& entry);
 
 		// Call 'draw()' of all objects on stage.
@@ -59,17 +61,17 @@ namespace jrc
 		void update();
 
 		// Show a character effect.
-		void show_character_effect(int32_t cid, CharEffect::Id effect);
+		void show_character_effect(std::int32_t cid, CharEffect::Id effect);
 
 		// Send key input to the stage.
-		void send_key(KeyType::Id keytype, int32_t keycode, bool pressed);
+		void send_key(KeyType::Id keytype, std::int32_t keycode, bool pressed);
 		// Send mouse input to the stage.
 		Cursor::State send_cursor(bool pressed, Point<int16_t> position);
 
 		// Check if the specified id is the player's id.
-		bool is_player(int32_t cid) const;
+		bool is_player(std::int32_t cid) const;
 
-		// Returns a reference to the npcs on the current map.
+		// Returns a reference to the NPCs on the current map.
 		MapNpcs& get_npcs();
 		// Returns a reference to the other characters on the current map.
 		MapChars& get_chars();
@@ -85,11 +87,14 @@ namespace jrc
 		Combat& get_combat();
 
 		// Return a pointer to a character, possibly the player.
-		Optional<Char> get_character(int32_t cid);
+		Optional<Char> get_character(std::int32_t cid);
+
+		// Set a map effect
+		void add_effect(std::string path);
 
 	private:
-		void load_map(int32_t mapid);
-		void respawn(int8_t portalid);
+		void load_map(std::int32_t mapid);
+		void respawn(std::int8_t portalid);
 		void check_portals();
 		void check_seats();
 		void check_ladders(bool up);
@@ -118,8 +123,8 @@ namespace jrc
 		MapChars chars;
 		MapMobs mobs;
 		MapDrops drops;
+		MapEffect effect;
 
 		Combat combat;
 	};
 }
-

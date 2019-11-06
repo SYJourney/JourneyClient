@@ -1,32 +1,36 @@
-/////////////////////////////////////////////////////////////////////////////
-// This file is part of the Journey MMORPG client                           //
-// Copyright © 2015-2016 Daniel Allendorf                                   //
-//                                                                          //
-// This program is free software: you can redistribute it and/or modify     //
-// it under the terms of the GNU Affero General Public License as           //
-// published by the Free Software Foundation, either version 3 of the       //
-// License, or (at your option) any later version.                          //
-//                                                                          //
-// This program is distributed in the hope that it will be useful,          //
-// but WITHOUT ANY WARRANTY; without even the implied warranty of           //
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            //
-// GNU Affero General Public License for more details.                      //
-//                                                                          //
-// You should have received a copy of the GNU Affero General Public License //
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.    //
-//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//	This file is part of the continued Journey MMORPG client					//
+//	Copyright (C) 2015-2019  Daniel Allendorf, Ryan Payton						//
+//																				//
+//	This program is free software: you can redistribute it and/or modify		//
+//	it under the terms of the GNU Affero General Public License as published by	//
+//	the Free Software Foundation, either version 3 of the License, or			//
+//	(at your option) any later version.											//
+//																				//
+//	This program is distributed in the hope that it will be useful,				//
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of				//
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the				//
+//	GNU Affero General Public License for more details.							//
+//																				//
+//	You should have received a copy of the GNU Affero General Public License	//
+//	along with this program.  If not, see <https://www.gnu.org/licenses/>.		//
+//////////////////////////////////////////////////////////////////////////////////
 #include "Gauge.h"
 
-namespace jrc
+namespace ms
 {
-	Gauge::Gauge(Texture front, Texture mid, Texture end, int16_t max, float percent)
+	Gauge::Gauge(Texture front, std::int16_t max, float percent) : barfront(front), maximum(max), percentage(percent)
 	{
-		barfront = front;
-		barmid = mid;
-		barend = end;
-		maximum = max;
-		percentage = percent;
+		target = percentage;
+	}
 
+	Gauge::Gauge(Texture front, Texture mid, std::int16_t max, float percent) : barfront(front), barmid(mid), maximum(max), percentage(percent)
+	{
+		target = percentage;
+	}
+
+	Gauge::Gauge(Texture front, Texture mid, Texture end, std::int16_t max, float percent) : barfront(front), barmid(mid), barend(end), maximum(max), percentage(percent)
+	{
 		target = percentage;
 	}
 
@@ -34,12 +38,13 @@ namespace jrc
 
 	void Gauge::draw(const DrawArgument& args) const
 	{
-		int16_t length = static_cast<int16_t>(percentage * maximum);
+		std::int16_t length = static_cast<int16_t>(percentage * maximum);
+
 		if (length > 0)
 		{
-			barfront.draw(args);
-			barmid.draw(args + DrawArgument({ 1, 0 }, { length, 0 }));
-			barend.draw(args + DrawArgument(length + 1, 0));
+			barfront.draw(args + DrawArgument(Point<int16_t>(0, 0), Point<int16_t>(length, 0)));
+			barmid.draw(args);
+			barend.draw(args + Point<int16_t>(length + 8, 20));
 		}
 	}
 
@@ -54,6 +59,7 @@ namespace jrc
 		if (percentage != target)
 		{
 			percentage += step;
+
 			if (step < 0.0f)
 			{
 				if (target - percentage >= step)

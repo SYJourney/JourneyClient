@@ -1,0 +1,14 @@
+/.vs
+/x64
+
+*.nx
+*.aps
+*.log
+*.tlog
+
+Settings
+
+build
+jbuild
+Debug
+.DS_Store

@@ -1,21 +1,22 @@
-/////////////////////////////////////////////////////////////////////////////
-// This file is part of the Journey MMORPG client                           //
-// Copyright © 2015-2016 Daniel Allendorf                                   //
-//                                                                          //
-// This program is free software: you can redistribute it and/or modify     //
-// it under the terms of the GNU Affero General Public License as           //
-// published by the Free Software Foundation, either version 3 of the       //
-// License, or (at your option) any later version.                          //
-//                                                                          //
-// This program is distributed in the hope that it will be useful,          //
-// but WITHOUT ANY WARRANTY; without even the implied warranty of           //
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            //
-// GNU Affero General Public License for more details.                      //
-//                                                                          //
-// You should have received a copy of the GNU Affero General Public License //
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.    //
-//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//	This file is part of the continued Journey MMORPG client					//
+//	Copyright (C) 2015-2019  Daniel Allendorf, Ryan Payton						//
+//																				//
+//	This program is free software: you can redistribute it and/or modify		//
+//	it under the terms of the GNU Affero General Public License as published by	//
+//	the Free Software Foundation, either version 3 of the License, or			//
+//	(at your option) any later version.											//
+//																				//
+//	This program is distributed in the hope that it will be useful,				//
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of				//
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the				//
+//	GNU Affero General Public License for more details.							//
+//																				//
+//	You should have received a copy of the GNU Affero General Public License	//
+//	along with this program.  If not, see <https://www.gnu.org/licenses/>.		//
+//////////////////////////////////////////////////////////////////////////////////
 #pragma once
+
 #include "Cursor.h"
 #include "Keyboard.h"
 #include "UIState.h"
@@ -29,7 +30,7 @@
 
 #include <unordered_map>
 
-namespace jrc
+namespace ms
 {
 	class UI : public Singleton<UI>
 	{
@@ -56,24 +57,33 @@ namespace jrc
 		void send_cursor(Point<int16_t> pos);
 		void send_cursor(bool pressed);
 		void send_cursor(Point<int16_t> cursorpos, Cursor::State cursorstate);
+		void send_focus(int focused);
+		void send_scroll(double yoffset);
+		void send_close();
+		void rightclick();
 		void doubleclick();
-		void send_key(int32_t keycode, bool pressed);
-		void send_menu(KeyAction::Id action);
+		void send_key(std::int32_t keycode, bool pressed);
 
 		void set_scrollnotice(const std::string& notice);
 		void focus_textfield(Textfield* textfield);
+		void remove_textfield();
 		void drag_icon(Icon* icon);
 
-		void add_keymapping(uint8_t no, uint8_t type, int32_t action);
+		void add_keymapping(std::uint8_t no, std::uint8_t type, std::int32_t action);
 
 		void clear_tooltip(Tooltip::Parent parent);
-		void show_equip(Tooltip::Parent parent, int16_t slot);
-		void show_item(Tooltip::Parent parent, int32_t item_id);
-		void show_skill(Tooltip::Parent parent, int32_t skill_id,
-			int32_t level, int32_t masterlevel, int64_t expiration);
+		void show_equip(Tooltip::Parent parent, std::int16_t slot);
+		void show_item(Tooltip::Parent parent, std::int32_t item_id);
+		void show_skill(Tooltip::Parent parent, std::int32_t skill_id, std::int32_t level, std::int32_t masterlevel, int64_t expiration);
+		void show_text(Tooltip::Parent parent, std::string text);
+
+		Keyboard& get_keyboard();
+		int64_t get_uptime();
+		std::uint16_t get_uplevel();
+		int64_t get_upexp();
 
 		template <class T, typename...Args>
-		Optional<T> emplace(Args&&...args);
+		Optional<T> emplace(Args&& ...args);
 		template <class T>
 		Optional<T> get_element();
 		void remove(UIElement::Type type);
@@ -85,14 +95,15 @@ namespace jrc
 		ScrollingNotice scrollingnotice;
 
 		Optional<Textfield> focusedtextfield;
-		std::unordered_map<int32_t, bool> is_key_down;
+		std::unordered_map<std::int32_t, bool> is_key_down;
 
 		bool enabled;
 		bool quitted;
+		bool caps_lock_enabled = false;
 	};
 
 	template <class T, typename...Args>
-	Optional<T> UI::emplace(Args&&...args)
+	Optional<T> UI::emplace(Args&& ...args)
 	{
 		if (auto iter = state->pre_add(T::TYPE, T::TOGGLED, T::FOCUSED))
 		{

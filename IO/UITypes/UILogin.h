@@ -1,33 +1,33 @@
-/////////////////////////////////////////////////////////////////////////////
-// This file is part of the Journey MMORPG client                           //
-// Copyright © 2015-2016 Daniel Allendorf                                   //
-//                                                                          //
-// This program is free software: you can redistribute it and/or modify     //
-// it under the terms of the GNU Affero General Public License as           //
-// published by the Free Software Foundation, either version 3 of the       //
-// License, or (at your option) any later version.                          //
-//                                                                          //
-// This program is distributed in the hope that it will be useful,          //
-// but WITHOUT ANY WARRANTY; without even the implied warranty of           //
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            //
-// GNU Affero General Public License for more details.                      //
-//                                                                          //
-// You should have received a copy of the GNU Affero General Public License //
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.    //
-//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//	This file is part of the continued Journey MMORPG client					//
+//	Copyright (C) 2015-2019  Daniel Allendorf, Ryan Payton						//
+//																				//
+//	This program is free software: you can redistribute it and/or modify		//
+//	it under the terms of the GNU Affero General Public License as published by	//
+//	the Free Software Foundation, either version 3 of the License, or			//
+//	(at your option) any later version.											//
+//																				//
+//	This program is distributed in the hope that it will be useful,				//
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of				//
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the				//
+//	GNU Affero General Public License for more details.							//
+//																				//
+//	You should have received a copy of the GNU Affero General Public License	//
+//	along with this program.  If not, see <https://www.gnu.org/licenses/>.		//
+//////////////////////////////////////////////////////////////////////////////////
 #pragma once
+
 #include "../UIElement.h"
 
 #include "../Components/Textfield.h"
-
 #include "../../Template/BoolPair.h"
 
-namespace jrc
+namespace ms
 {
 	class UILogin : public UIElement
 	{
 	public:
-		static constexpr Type TYPE = LOGIN;
+		static constexpr Type TYPE = UIElement::Type::LOGIN;
 		static constexpr bool FOCUSED = false;
 		static constexpr bool TOGGLED = false;
 
@@ -39,10 +39,11 @@ namespace jrc
 		Cursor::State send_cursor(bool clicked, Point<int16_t> cursor_pos) override;
 
 	protected:
-		Button::State button_pressed(uint16_t id) override;
+		Button::State button_pressed(std::uint16_t id) override;
 
 	private:
 		void login();
+		void open_url(std::uint16_t id);
 
 		enum Buttons
 		{
@@ -56,6 +57,7 @@ namespace jrc
 			NUM_BUTTONS
 		};
 
+		Text version;
 		Textfield account;
 		Textfield password;
 		Texture accountbg;

@@ -1,20 +1,20 @@
-/////////////////////////////////////////////////////////////////////////////
-// This file is part of the Journey MMORPG client                           //
-// Copyright © 2015-2016 Daniel Allendorf                                   //
-//                                                                          //
-// This program is free software: you can redistribute it and/or modify     //
-// it under the terms of the GNU Affero General Public License as           //
-// published by the Free Software Foundation, either version 3 of the       //
-// License, or (at your option) any later version.                          //
-//                                                                          //
-// This program is distributed in the hope that it will be useful,          //
-// but WITHOUT ANY WARRANTY; without even the implied warranty of           //
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            //
-// GNU Affero General Public License for more details.                      //
-//                                                                          //
-// You should have received a copy of the GNU Affero General Public License //
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.    //
-//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//	This file is part of the continued Journey MMORPG client					//
+//	Copyright (C) 2015-2019  Daniel Allendorf, Ryan Payton						//
+//																				//
+//	This program is free software: you can redistribute it and/or modify		//
+//	it under the terms of the GNU Affero General Public License as published by	//
+//	the Free Software Foundation, either version 3 of the License, or			//
+//	(at your option) any later version.											//
+//																				//
+//	This program is distributed in the hope that it will be useful,				//
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of				//
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the				//
+//	GNU Affero General Public License for more details.							//
+//																				//
+//	You should have received a copy of the GNU Affero General Public License	//
+//	along with this program.  If not, see <https://www.gnu.org/licenses/>.		//
+//////////////////////////////////////////////////////////////////////////////////
 #include "PacketSwitch.h"
 
 #include "Handlers/CommonHandlers.h"
@@ -26,13 +26,14 @@
 #include "Handlers/InventoryHandlers.h"
 #include "Handlers/MessagingHandlers.h"
 #include "Handlers/NpcInteractionHandlers.h"
+#include "Handlers/TestingHandlers.h"
 
 #include "../Console.h"
 
-namespace jrc
+namespace ms
 {
 	// Opcodes for InPackets.
-	enum PacketSwitch::Opcode : uint16_t
+	enum Opcode : std::uint16_t
 	{
 		// Login 1
 		LOGIN_RESULT = 0,
@@ -50,6 +51,7 @@ namespace jrc
 		// Login 2
 		SELECT_WORLD = 26,
 		RECOMMENDED_WORLDS = 27,
+		CHECK_SPW_RESULT = 28,
 
 		// Inventory 1
 		MODIFY_INVENTORY = 29,
@@ -87,6 +89,8 @@ namespace jrc
 		SKILL_MACROS = 124,
 		SET_FIELD = 125,
 		FIELD_EFFECT = 138,
+		FIELD_OBSTACLE_ONOFF_LIST = 140,
+		ADMIN_RESULT = 144,
 		CLOCK = 147,
 
 		// Mapobject
@@ -106,11 +110,15 @@ namespace jrc
 		ATTACKED_RANGED = 187,
 		ATTACKED_MAGIC = 188,
 
+		FACIAL_EXPRESSION = 193,
 		SHOW_ITEM_EFFECT = 194,
 		SHOW_CHAIR = 196,
 		UPDATE_CHARLOOK = 197,
 		SHOW_FOREIGN_EFFECT = 198,
-		SHOW_ITEM_GAIN_INCHAT = 206, // this is terribly named
+		GIVE_FOREIGN_BUFF = 199,
+		CANCEL_FOREIGN_BUFF = 200,
+		SHOW_ITEM_GAIN_INCHAT = 206, // TODO: Rename this (Terribly named)
+		UPDATE_QUEST_INFO = 211,
 		LOCK_UI = 221,
 		TOGGLE_UI = 222,
 
@@ -135,8 +143,11 @@ namespace jrc
 		// NPC Interaction
 		NPC_DIALOGUE = 304,
 		OPEN_NPC_SHOP = 305,
-
-		KEYMAP = 335
+		CONFIRM_SHOP_TRANSACTION = 306,
+		PLAYER_INTERACTION = 314,
+		KEYMAP = 335,
+		AUTO_HP_POT = 336,
+		AUTO_MP_POT = 337
 	};
 
 	PacketSwitch::PacketSwitch()
@@ -147,6 +158,7 @@ namespace jrc
 		// Login handlers
 		emplace<LOGIN_RESULT, LoginResultHandler>();
 		emplace<SERVERLIST, ServerlistHandler>();
+		emplace<RECOMMENDED_WORLDS, RecommendedWorldsHandler>();
 		emplace<CHARLIST, CharlistHandler>();
 		emplace<CHARNAME_RESPONSE, CharnameResponseHandler>();
 		emplace<ADD_NEWCHAR_ENTRY, AddNewCharEntryHandler>();
@@ -207,7 +219,7 @@ namespace jrc
 		emplace<NPC_DIALOGUE, NpcDialogueHandler>();
 		emplace<OPEN_NPC_SHOP, OpenNpcShopHandler>();
 
-		// Todo
+		// TODO: Handle packets below correctly
 		emplace<MOVE_MOB_RESPONSE, NullHandler>();
 		emplace<MEMO_RESULT, NullHandler>();
 		emplace<ENABLE_REPORT, NullHandler>();
@@ -220,20 +232,36 @@ namespace jrc
 
 		// Ignored
 		emplace<SELECT_WORLD, NullHandler>();
-		emplace<RECOMMENDED_WORLDS, NullHandler>();
 		emplace<UPDATE_GENDER, NullHandler>();
+
+		// New handlers for testing only
+		// Once these are handled properly, they need moved to a proper file
+		emplace<CHECK_SPW_RESULT, CheckSpwResultHandler>();
+		emplace<FIELD_EFFECT, FieldEffectHandler>();
+		emplace<FIELD_OBSTACLE_ONOFF_LIST, FieldObstacleOnOffListHandler>();
+		emplace<ADMIN_RESULT, AdminResultHandler>();
+		emplace<FACIAL_EXPRESSION, FacialExpressionHandler>();
+		emplace<GIVE_FOREIGN_BUFF, GiveForeignBuffHandler>();
+		emplace<CANCEL_FOREIGN_BUFF, CancelForeignBuffHandler>();
+		emplace<UPDATE_QUEST_INFO, UpdateQuestInfoHandler>();
+		emplace<LOCK_UI, LockUiHandler>();
+		emplace<TOGGLE_UI, ToggleUiHandler>();
+		emplace<CONFIRM_SHOP_TRANSACTION, ConfirmShopTransactionHandler>();
+		emplace<PLAYER_INTERACTION, PlayerInteractionHandler>();
+		emplace<AUTO_HP_POT, AutoHpPotHandler>();
+		emplace<AUTO_MP_POT, AutoMpPotHandler>();
 	}
 
-	void PacketSwitch::forward(const int8_t* bytes, size_t length) const
+	void PacketSwitch::forward(const std::int8_t* bytes, std::size_t length) const
 	{
 		// Wrap the bytes with a parser.
 		InPacket recv = { bytes, length };
 		// Read the opcode to determine handler responsible.
-		uint16_t opcode = recv.read_short();
+		std::uint16_t opcode = recv.read_short();
 
 		if (opcode < NUM_HANDLERS)
 		{
-			if (auto& handler = handlers[opcode])
+			if (auto & handler = handlers[opcode])
 			{
 				// Handler ok. Packet is passed on.
 				try
@@ -259,7 +287,7 @@ namespace jrc
 		}
 	}
 
-	void PacketSwitch::warn(const std::string& message, size_t opcode) const
+	void PacketSwitch::warn(const std::string& message, std::size_t opcode) const
 	{
 		Console::get().print(message + ", Opcode: " + std::to_string(opcode));
 	}

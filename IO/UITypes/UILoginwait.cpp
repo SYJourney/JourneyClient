@@ -1,49 +1,76 @@
-/////////////////////////////////////////////////////////////////////////////
-// This file is part of the Journey MMORPG client                           //
-// Copyright © 2015-2016 Daniel Allendorf                                   //
-//                                                                          //
-// This program is free software: you can redistribute it and/or modify     //
-// it under the terms of the GNU Affero General Public License as           //
-// published by the Free Software Foundation, either version 3 of the       //
-// License, or (at your option) any later version.                          //
-//                                                                          //
-// This program is distributed in the hope that it will be useful,          //
-// but WITHOUT ANY WARRANTY; without even the implied warranty of           //
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            //
-// GNU Affero General Public License for more details.                      //
-//                                                                          //
-// You should have received a copy of the GNU Affero General Public License //
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.    //
-//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//	This file is part of the continued Journey MMORPG client					//
+//	Copyright (C) 2015-2019  Daniel Allendorf, Ryan Payton						//
+//																				//
+//	This program is free software: you can redistribute it and/or modify		//
+//	it under the terms of the GNU Affero General Public License as published by	//
+//	the Free Software Foundation, either version 3 of the License, or			//
+//	(at your option) any later version.											//
+//																				//
+//	This program is distributed in the hope that it will be useful,				//
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of				//
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the				//
+//	GNU Affero General Public License for more details.							//
+//																				//
+//	You should have received a copy of the GNU Affero General Public License	//
+//	along with this program.  If not, see <https://www.gnu.org/licenses/>.		//
+//////////////////////////////////////////////////////////////////////////////////
 #pragma once
+
 #include "UILoginwait.h"
 
-#include "../../Graphics/Sprite.h"
+#include "../Components/MapleButton.h"
+#include "../../Net/Session.h"
 
-#include "nlnx/nx.hpp"
+#include <nlnx/nx.hpp>
 
-namespace jrc
+namespace ms
 {
-	UILoginwait::UILoginwait()
+	UILoginwait::UILoginwait(std::function<void()> okhandler) : okhandler(okhandler)
 	{
-		nl::node src = nl::nx::ui["Login.img"]["Notice"]["Loading"];
+		nl::node Loading = nl::nx::ui["Login.img"]["Notice"]["Loading"];
+		nl::node backgrnd = Loading["backgrnd"];
 
-		background = src["backgrnd"];
-		circle = { src["circle"], { 125, 72 } };
+		sprites.emplace_back(backgrnd);
+		sprites.emplace_back(Loading["circle"], Point<int16_t>(127, 70));
 
-		position = { 292, 200 };
-		dimension = { 282, 144 };
+		buttons[Buttons::CANCEL] = std::make_unique<MapleButton>(Loading["BtCancel"], Point<int16_t>(101, 106));
+
+		position = Point<int16_t>(276, 219);
+		dimension = Texture(backgrnd).get_dimensions();
 		active = true;
 	}
 
+	UILoginwait::UILoginwait() : UILoginwait([]() {}) {}
+
 	void UILoginwait::draw(float alpha) const
 	{
-		background.draw({ position });
-		circle.draw(position, alpha);
+		UIElement::draw(alpha);
 	}
 
 	void UILoginwait::update()
 	{
-		circle.update();
+		UIElement::update();
+	}
+
+	void UILoginwait::close()
+	{
+		active = false;
+
+		okhandler();
+	}
+
+	std::function<void()> UILoginwait::get_handler()
+	{
+		return okhandler;
+	}
+
+	Button::State UILoginwait::button_pressed(std::uint16_t id)
+	{
+		Session::get().reconnect();
+
+		close();
+
+		return Button::State::NORMAL;
 	}
 }

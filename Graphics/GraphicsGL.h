@@ -1,41 +1,36 @@
-/////////////////////////////////////////////////////////////////////////////
-// This file is part of the Journey MMORPG client                           //
-// Copyright © 2015-2016 Daniel Allendorf                                   //
-//                                                                          //
-// This program is free software: you can redistribute it and/or modify     //
-// it under the terms of the GNU Affero General Public License as           //
-// published by the Free Software Foundation, either version 3 of the       //
-// License, or (at your option) any later version.                          //
-//                                                                          //
-// This program is distributed in the hope that it will be useful,          //
-// but WITHOUT ANY WARRANTY; without even the implied warranty of           //
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            //
-// GNU Affero General Public License for more details.                      //
-//                                                                          //
-// You should have received a copy of the GNU Affero General Public License //
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.    //
-//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//	This file is part of the continued Journey MMORPG client					//
+//	Copyright (C) 2015-2019  Daniel Allendorf, Ryan Payton						//
+//																				//
+//	This program is free software: you can redistribute it and/or modify		//
+//	it under the terms of the GNU Affero General Public License as published by	//
+//	the Free Software Foundation, either version 3 of the License, or			//
+//	(at your option) any later version.											//
+//																				//
+//	This program is distributed in the hope that it will be useful,				//
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of				//
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the				//
+//	GNU Affero General Public License for more details.							//
+//																				//
+//	You should have received a copy of the GNU Affero General Public License	//
+//	along with this program.  If not, see <https://www.gnu.org/licenses/>.		//
+//////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "DrawArgument.h"
+
 #include "Text.h"
 
 #include "../Constants.h"
 #include "../Error.h"
+
 #include "../Util/QuadTree.h"
-#include "../Template/Rectangle.h"
 #include "../Template/Singleton.h"
 
-#include "nlnx/bitmap.hpp"
-
-#include "GL/glew.h"
-
-#include "ft2build.h"
+#include <ft2build.h>
 #include FT_FREETYPE_H
 
-#include <unordered_map>
-#include <vector>
+#include <nlnx/bitmap.hpp>
 
-namespace jrc 
+namespace ms
 {
 	// Graphics engine which uses OpenGL.
 	class GraphicsGL : public Singleton<GraphicsGL>
@@ -54,18 +49,15 @@ namespace jrc
 		// Add a bitmap to the available resources.
 		void addbitmap(const nl::bitmap& bmp);
 		// Draw the bitmap with the given parameters.
-		void draw(const nl::bitmap& bmp, const Rectangle<int16_t>& rect,
-			const Color& color, float angle);
+		void draw(const nl::bitmap& bmp, const Rectangle<int16_t>& rect, const Color& color, float angle);
 
 		// Create a layout for the text with the parameters specified.
-		Text::Layout createlayout(const std::string& text, Text::Font font,
-			Text::Alignment alignment, int16_t maxwidth, bool formatted);
+		Text::Layout createlayout(const std::string& text, Text::Font font, Text::Alignment alignment, std::int16_t maxwidth, bool formatted, std::int16_t line_adj);
 		// Draw a text with the given parameters.
-		void drawtext(const DrawArgument& args, const std::string& text, const Text::Layout& layout, Text::Font font,
-			Text::Color color, Text::Background back);
+		void drawtext(const DrawArgument& args, const std::string& text, const Text::Layout& layout, Text::Font font, Color::Name color, Text::Background back);
 
 		// Draw a rectangle filled with the specified color.
-		void drawrectangle(int16_t x, int16_t y, int16_t w, int16_t h, float r, float g, float b, float a);
+		void drawrectangle(std::int16_t x, std::int16_t y, std::int16_t w, std::int16_t h, float r, float g, float b, float a);
 		// Fill the screen with the specified color.
 		void drawscreenfill(float r, float g, float b, float a);
 
@@ -82,7 +74,7 @@ namespace jrc
 	private:
 		void clearinternal();
 		bool addfont(const char* name, Text::Font id, FT_UInt width, FT_UInt height);
-		
+
 		struct Offset
 		{
 			GLshort l;
@@ -94,11 +86,11 @@ namespace jrc
 			{
 				l = x;
 				r = x + w;
-				t = y ;
+				t = y;
 				b = y + h;
 			}
 
-			Offset() 
+			Offset()
 			{
 				l = 0;
 				r = 0;
@@ -106,6 +98,7 @@ namespace jrc
 				b = 0;
 			}
 		};
+
 		// Add a bitmap to the available resources.
 		const Offset& getoffset(const nl::bitmap& bmp);
 
@@ -132,14 +125,14 @@ namespace jrc
 				b = 0;
 			}
 
-			GLshort width() const 
-			{ 
-				return r - l; 
+			GLshort width() const
+			{
+				return r - l;
 			}
 
-			GLshort height() const 
-			{ 
-				return b - t; 
+			GLshort height() const
+			{
+				return b - t;
 			}
 		};
 
@@ -155,12 +148,11 @@ namespace jrc
 				Color c;
 			};
 
-			static const size_t LENGTH = 4;
+			static const std::size_t LENGTH = 4;
 			Vertex vertices[LENGTH];
 
-			Quad(GLshort l, GLshort r, GLshort t, GLshort b, const Offset& o,
-				const Color& color, GLfloat rot) {
-
+			Quad(GLshort l, GLshort r, GLshort t, GLshort b, const Offset& o, const Color& color, GLfloat rot)
+			{
 				vertices[0] = { l, t, o.l, o.t, color };
 				vertices[1] = { l, b, o.l, o.b, color };
 				vertices[2] = { r, b, o.r, o.b, color };
@@ -209,13 +201,13 @@ namespace jrc
 				height = h;
 			}
 
-			Font() 
+			Font()
 			{
 				width = 0;
 				height = 0;
 			}
 
-			int16_t linespace() const
+			std::int16_t linespace() const
 			{
 				return static_cast<int16_t>(height * 1.35 + 1);
 			}
@@ -224,39 +216,37 @@ namespace jrc
 		class LayoutBuilder
 		{
 		public:
-			LayoutBuilder(const Font& font, Text::Alignment alignment, int16_t maxwidth, bool formatted);
+			LayoutBuilder(const Font& font, Text::Alignment alignment, std::int16_t maxwidth, bool formatted, std::int16_t line_adj);
 
-			size_t add(const char* text, size_t prev, size_t first, size_t last);
-			Text::Layout finish(size_t first, size_t last);
+			std::size_t add(const char* text, std::size_t prev, std::size_t first, std::size_t last);
+			Text::Layout finish(std::size_t first, std::size_t last);
 
 		private:
-			void add_word(size_t first, size_t last, Text::Font font, Text::Color color);
+			void add_word(std::size_t first, std::size_t last, Text::Font font, Color::Name color);
 			void add_line();
 
 			const Font& font;
 
 			Text::Alignment alignment;
 			Text::Font fontid;
-			Text::Color color;
-			int16_t maxwidth;
+			Color::Name color;
+			std::int16_t maxwidth;
 			bool formatted;
 
-			int16_t ax;
-			int16_t ay;
+			std::int16_t ax;
+			std::int16_t ay;
 
 			std::vector<Text::Layout::Line> lines;
 			std::vector<Text::Layout::Word> words;
 			std::vector<int16_t> advances;
-			int16_t width;
-			int16_t endy;
+			std::int16_t width;
+			std::int16_t endy;
+			std::int16_t line_adj;
 		};
 
-		static constexpr Rectangle<int16_t> SCREEN = {
-			0,
-			Constants::VIEWWIDTH,
-			-Constants::VIEWYOFFSET,
-			-Constants::VIEWYOFFSET + Constants::VIEWHEIGHT
-		};
+		std::int16_t VWIDTH;
+		std::int16_t VHEIGHT;
+		Rectangle<int16_t> SCREEN;
 
 		static const GLshort ATLASW = 8192;
 		static const GLshort ATLASH = 8192;
@@ -277,19 +267,18 @@ namespace jrc
 		GLint uniform_yoffset;
 		GLint uniform_fontregion;
 
-		std::unordered_map<size_t, Offset> offsets;
+		std::unordered_map<std::size_t, Offset> offsets;
 		Offset nulloffset;
 
-		QuadTree<size_t, Leftover> leftovers;
-		size_t rlid;
-		size_t wasted;
+		QuadTree<std::size_t, Leftover> leftovers;
+		std::size_t rlid;
+		std::size_t wasted;
 		Point<GLshort> border;
 		Range<GLshort> yrange;
 
 		FT_Library ftlibrary;
-		Font fonts[Text::NUM_FONTS];
+		Font fonts[Text::Font::NUM_FONTS];
 		Point<GLshort> fontborder;
 		GLshort fontymax;
 	};
 }
-

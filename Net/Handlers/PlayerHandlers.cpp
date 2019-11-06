@@ -1,20 +1,20 @@
-/////////////////////////////////////////////////////////////////////////////
-// This file is part of the Journey MMORPG client                           //
-// Copyright © 2015-2016 Daniel Allendorf                                   //
-//                                                                          //
-// This program is free software: you can redistribute it and/or modify     //
-// it under the terms of the GNU Affero General Public License as           //
-// published by the Free Software Foundation, either version 3 of the       //
-// License, or (at your option) any later version.                          //
-//                                                                          //
-// This program is distributed in the hope that it will be useful,          //
-// but WITHOUT ANY WARRANTY; without even the implied warranty of           //
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            //
-// GNU Affero General Public License for more details.                      //
-//                                                                          //
-// You should have received a copy of the GNU Affero General Public License //
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.    //
-//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//	This file is part of the continued Journey MMORPG client					//
+//	Copyright (C) 2015-2019  Daniel Allendorf, Ryan Payton						//
+//																				//
+//	This program is free software: you can redistribute it and/or modify		//
+//	it under the terms of the GNU Affero General Public License as published by	//
+//	the Free Software Foundation, either version 3 of the License, or			//
+//	(at your option) any later version.											//
+//																				//
+//	This program is distributed in the hope that it will be useful,				//
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of				//
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the				//
+//	GNU Affero General Public License for more details.							//
+//																				//
+//	You should have received a copy of the GNU Affero General Public License	//
+//	along with this program.  If not, see <https://www.gnu.org/licenses/>.		//
+//////////////////////////////////////////////////////////////////////////////////
 #include "PlayerHandlers.h"
 
 #include "../../Character/Buff.h"
@@ -24,16 +24,16 @@
 #include "../../IO/UITypes/UIStatsinfo.h"
 #include "../../IO/UITypes/UISkillbook.h"
 
-namespace jrc
+namespace ms
 {
 	void KeymapHandler::handle(InPacket& recv) const
 	{
 		recv.skip(1);
 
-		for (uint8_t i = 0; i < 90; i++)
+		for (std::uint8_t i = 0; i < 90; i++)
 		{
-			uint8_t type = recv.read_byte();
-			int32_t action = recv.read_int();
+			std::uint8_t type = recv.read_byte();
+			std::int32_t action = recv.read_int();
 
 			UI::get().add_keymapping(i, type, action);
 		}
@@ -42,8 +42,9 @@ namespace jrc
 
 	void SkillMacrosHandler::handle(InPacket& recv) const
 	{
-		uint8_t size = recv.read_byte();
-		for (uint8_t i = 0; i < size; i++)
+		std::uint8_t size = recv.read_byte();
+
+		for (std::uint8_t i = 0; i < size; i++)
 		{
 			recv.read_string(); // name
 			recv.read_byte(); // 'shout' byte
@@ -57,23 +58,16 @@ namespace jrc
 	void ChangeStatsHandler::handle(InPacket& recv) const
 	{
 		recv.read_bool(); // 'itemreaction'
-		int32_t updatemask = recv.read_int();
+		std::int32_t updatemask = recv.read_int();
 
 		bool recalculate = false;
+
 		for (auto iter : Maplestat::codes)
-		{
 			if (updatemask & iter.second)
-			{
 				recalculate |= handle_stat(iter.first, recv);
-			}
-		}
 
 		if (recalculate)
-		{
-			Stage::get()
-				.get_player()
-				.recalc_stats(false);
-		}
+			Stage::get().get_player().recalc_stats(false);
 
 		UI::get().enable();
 	}
@@ -112,16 +106,17 @@ namespace jrc
 		}
 
 		bool update_statsinfo = need_statsinfo_update(stat);
+
 		if (update_statsinfo && !recalculate)
-		{
 			if (auto statsinfo = UI::get().get_element<UIStatsinfo>())
 				statsinfo->update_stat(stat);
-		}
 
 		bool update_skillbook = need_skillbook_update(stat);
+
 		if (update_skillbook)
 		{
-			int16_t value = player.get_stats().get_stat(stat);
+			std::int16_t value = player.get_stats().get_stat(stat);
+
 			if (auto skillbook = UI::get().get_element<UISkillbook>())
 				skillbook->update_stat(stat, value);
 		}
@@ -175,28 +170,21 @@ namespace jrc
 		}
 
 		for (auto& iter : Buffstat::first_codes)
-		{
 			if (firstmask & iter.second)
-			{
 				handle_buff(recv, iter.first);
-			}
-		}
+
 		for (auto& iter : Buffstat::second_codes)
-		{
 			if (secondmask & iter.second)
-			{
 				handle_buff(recv, iter.first);
-			}
-		}
 
 		Stage::get().get_player().recalc_stats(false);
 	}
 
 	void ApplyBuffHandler::handle_buff(InPacket& recv, Buffstat::Id bs) const
 	{
-		int16_t value = recv.read_short();
-		int32_t skillid = recv.read_int();
-		int32_t duration = recv.read_int();
+		std::int16_t value = recv.read_short();
+		std::int32_t skillid = recv.read_int();
+		std::int32_t duration = recv.read_int();
 
 		Stage::get().get_player().give_buff({ bs, value, skillid, duration });
 
@@ -215,18 +203,16 @@ namespace jrc
 		Stage::get().get_player().recalc_stats(false);
 	}
 
-
 	void UpdateSkillHandler::handle(InPacket& recv) const
 	{
 		recv.skip(3);
 
-		int32_t skillid = recv.read_int();
-		int32_t level = recv.read_int();
-		int32_t masterlevel = recv.read_int();
+		std::int32_t skillid = recv.read_int();
+		std::int32_t level = recv.read_int();
+		std::int32_t masterlevel = recv.read_int();
 		int64_t expire = recv.read_long();
 
-		Stage::get().get_player()
-			.change_skill(skillid, level, masterlevel, expire);
+		Stage::get().get_player().change_skill(skillid, level, masterlevel, expire);
 
 		if (auto skillbook = UI::get().get_element<UISkillbook>())
 			skillbook->update_skills(skillid);
@@ -234,11 +220,10 @@ namespace jrc
 		UI::get().enable();
 	}
 
-
 	void AddCooldownHandler::handle(InPacket& recv) const
 	{
-		int32_t skill_id = recv.read_int();
-		int16_t cooltime = recv.read_short();
+		std::int32_t skill_id = recv.read_int();
+		std::int16_t cooltime = recv.read_short();
 
 		Stage::get().get_player().add_cooldown(skill_id, cooltime);
 	}

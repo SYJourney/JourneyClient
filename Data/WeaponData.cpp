@@ -1,46 +1,44 @@
-//////////////////////////////////////////////////////////////////////////////
-// This file is part of the Journey MMORPG client                           //
-// Copyright © 2015-2016 Daniel Allendorf                                   //
-//                                                                          //
-// This program is free software: you can redistribute it and/or modify     //
-// it under the terms of the GNU Affero General Public License as           //
-// published by the Free Software Foundation, either version 3 of the       //
-// License, or (at your option) any later version.                          //
-//                                                                          //
-// This program is distributed in the hope that it will be useful,          //
-// but WITHOUT ANY WARRANTY; without even the implied warranty of           //
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            //
-// GNU Affero General Public License for more details.                      //
-//                                                                          //
-// You should have received a copy of the GNU Affero General Public License //
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.    //
-//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//	This file is part of the continued Journey MMORPG client					//
+//	Copyright (C) 2015-2019  Daniel Allendorf, Ryan Payton						//
+//																				//
+//	This program is free software: you can redistribute it and/or modify		//
+//	it under the terms of the GNU Affero General Public License as published by	//
+//	the Free Software Foundation, either version 3 of the License, or			//
+//	(at your option) any later version.											//
+//																				//
+//	This program is distributed in the hope that it will be useful,				//
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of				//
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the				//
+//	GNU Affero General Public License for more details.							//
+//																				//
+//	You should have received a copy of the GNU Affero General Public License	//
+//	along with this program.  If not, see <https://www.gnu.org/licenses/>.		//
+//////////////////////////////////////////////////////////////////////////////////
 #include "WeaponData.h"
 
 #include "../Console.h"
 
-#include "nlnx/nx.hpp"
-#include "nlnx/node.hpp"
+#include <nlnx/nx.hpp>
+#include <nlnx/node.hpp>
 
-namespace jrc
+namespace ms
 {
-	WeaponData::WeaponData(int32_t equipid)
-		: equipdata(EquipData::get(equipid)) {
-
-		int32_t prefix = equipid / 10000;
+	WeaponData::WeaponData(std::int32_t equipid) : equipdata(EquipData::get(equipid))
+	{
+		std::int32_t prefix = equipid / 10000;
 		type = Weapon::by_value(prefix);
-		twohanded = (prefix == Weapon::STAFF)
-			|| (prefix >= Weapon::SWORD_2H && prefix <= Weapon::POLEARM)
-			|| (prefix == Weapon::CROSSBOW);
+		twohanded = (prefix == Weapon::STAFF) || (prefix >= Weapon::SWORD_2H && prefix <= Weapon::POLEARM) || (prefix == Weapon::CROSSBOW);
 
 		nl::node src = nl::nx::character["Weapon"]["0" + std::to_string(equipid) + ".img"]["info"];
 
-		attackspeed = static_cast<uint8_t>(src["attackSpeed"]);
-		attack = static_cast<uint8_t>(src["attack"]);
+		attackspeed = static_cast<std::uint8_t>(src["attackSpeed"]);
+		attack = static_cast<std::uint8_t>(src["attack"]);
 
 		nl::node soundsrc = nl::nx::sound["Weapon.img"][src["sfx"]];
 
 		bool twosounds = soundsrc["Attack2"].data_type() == nl::node::type::audio;
+
 		if (twosounds)
 		{
 			usesounds[false] = soundsrc["Attack"];
@@ -52,7 +50,7 @@ namespace jrc
 			usesounds[true] = soundsrc["Attack"];
 		}
 
-		afterimage = src["afterImage"];
+		afterimage = src["afterImage"].get_string();
 	}
 
 	bool WeaponData::is_valid() const
@@ -70,12 +68,12 @@ namespace jrc
 		return twohanded;
 	}
 
-	uint8_t WeaponData::get_speed() const
+	std::uint8_t WeaponData::get_speed() const
 	{
 		return attackspeed;
 	}
 
-	uint8_t WeaponData::get_attack() const
+	std::uint8_t WeaponData::get_attack() const
 	{
 		return attack;
 	}
@@ -107,7 +105,7 @@ namespace jrc
 		}
 	}
 
-	uint8_t WeaponData::get_attackdelay() const
+	std::uint8_t WeaponData::get_attackdelay() const
 	{
 		if (type == Weapon::NONE)
 			return 0;

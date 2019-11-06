@@ -1,46 +1,42 @@
-//////////////////////////////////////////////////////////////////////////////
-// This file is part of the Journey MMORPG client                           //
-// Copyright © 2015-2016 Daniel Allendorf                                   //
-//                                                                          //
-// This program is free software: you can redistribute it and/or modify     //
-// it under the terms of the GNU Affero General Public License as           //
-// published by the Free Software Foundation, either version 3 of the       //
-// License, or (at your option) any later version.                          //
-//                                                                          //
-// This program is distributed in the hope that it will be useful,          //
-// but WITHOUT ANY WARRANTY; without even the implied warranty of           //
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            //
-// GNU Affero General Public License for more details.                      //
-//                                                                          //
-// You should have received a copy of the GNU Affero General Public License //
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.    //
-//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//	This file is part of the continued Journey MMORPG client					//
+//	Copyright (C) 2015-2019  Daniel Allendorf, Ryan Payton						//
+//																				//
+//	This program is free software: you can redistribute it and/or modify		//
+//	it under the terms of the GNU Affero General Public License as published by	//
+//	the Free Software Foundation, either version 3 of the License, or			//
+//	(at your option) any later version.											//
+//																				//
+//	This program is distributed in the hope that it will be useful,				//
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of				//
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the				//
+//	GNU Affero General Public License for more details.							//
+//																				//
+//	You should have received a copy of the GNU Affero General Public License	//
+//	along with this program.  If not, see <https://www.gnu.org/licenses/>.		//
+//////////////////////////////////////////////////////////////////////////////////
 #pragma once
+
 #include "../UIElement.h"
 #include "../UIDragElement.h"
 
 #include "../Components/Slider.h"
-
+#include "../Components/Charset.h"
 #include "../../Character/CharStats.h"
 #include "../../Character/Skillbook.h"
 #include "../../Graphics/Text.h"
 
 #include <vector>
 
-namespace jrc
+namespace ms
 {
 	class SkillIcon
 	{
 	public:
-		SkillIcon(int32_t id, int32_t level);
+		SkillIcon(std::int32_t id, std::int32_t level);
 
 		void draw(const DrawArgument& args) const;
 
-		Cursor::State send_cursor(Point<int16_t> cursorpos, bool clicked);
-
-		int32_t get_id() const;
-
-	private:
 		enum State
 		{
 			NORMAL,
@@ -48,22 +44,29 @@ namespace jrc
 			MOUSEOVER
 		};
 
+		void set_state(State state);
+
+		std::int32_t get_id() const;
+		std::int32_t get_level() const;
+		Texture get_icon() const;
+
+	private:
 		Texture normal;
 		Texture disabled;
 		Texture mouseover;
 		Text name;
 		Text level;
-		int32_t id;
+		std::int32_t id;
+		std::int32_t lv;
 
 		State state;
 		bool enabled;
 	};
 
-
 	class UISkillbook : public UIDragElement<PosSKILL>
 	{
 	public:
-		static constexpr Type TYPE = SKILLBOOK;
+		static constexpr Type TYPE = UIElement::Type::SKILLBOOK;
 		static constexpr bool FOCUSED = false;
 		static constexpr bool TOGGLED = true;
 
@@ -71,35 +74,54 @@ namespace jrc
 
 		void draw(float alpha) const override;
 
+		void toggle_active() override;
 		void doubleclick(Point<int16_t> cursorpos) override;
 		bool remove_cursor(bool clicked, Point<int16_t> cursorpos) override;
 		Cursor::State send_cursor(bool clicked, Point<int16_t> cursorpos) override;
+		void send_key(std::int32_t keycode, bool pressed, bool escape) override;
 
-		void update_stat(Maplestat::Id stat, int16_t value);
-		void update_skills(int32_t skill_id);
+		void update_stat(Maplestat::Id stat, std::int16_t value);
+		void update_skills(std::int32_t skill_id);
+		bool is_skillpoint_enabled();
 
 	protected:
-		Button::State button_pressed(uint16_t id) override;
+		Button::State button_pressed(std::uint16_t id) override;
 
 	private:
-		void change_job(uint16_t id);
-		void change_sp(int16_t value);
-		void change_tab(uint16_t new_tab);
-		void change_offset(uint16_t new_offset);
+		void change_job(std::uint16_t id);
+		void change_sp();
+		void change_tab(std::uint16_t new_tab);
+		void change_offset(std::uint16_t new_offset);
 
-		void show_skill(int32_t skill_id);
+		void show_skill(std::int32_t skill_id);
 		void clear_tooltip();
 
-		bool can_raise(int32_t skill_id) const;
-		void send_spup(uint16_t row);
+		bool can_raise(std::int32_t skill_id) const;
+		void send_spup(std::uint16_t row);
+		void spend_sp(std::int32_t skill_id);
 
-		Job::Level joblevel_by_tab(uint16_t tab) const;
+		Job::Level joblevel_by_tab(std::uint16_t tab) const;
 		SkillIcon* icon_by_position(Point<int16_t> cursorpos);
 
-		enum Buttons
+		void close();
+		bool check_required(std::int32_t id) const;
+
+		void set_macro(bool enabled);
+		void set_skillpoint(bool enabled);
+
+		enum Buttons : std::uint16_t
 		{
-			BT_GUILD,
+			BT_CLOSE,
 			BT_HYPER,
+			BT_GUILDSKILL,
+			BT_RIDE,
+			BT_MACRO,
+			BT_MACRO_OK,
+			BT_CANCLE,
+			BT_OKAY,
+			BT_SPDOWN,
+			BT_SPMAX,
+			BT_SPUP,
 			BT_TAB0,
 			BT_TAB1,
 			BT_TAB2,
@@ -108,14 +130,23 @@ namespace jrc
 			BT_SPUP0,
 			BT_SPUP1,
 			BT_SPUP2,
-			BT_SPUP3
+			BT_SPUP3,
+			BT_SPUP4,
+			BT_SPUP5,
+			BT_SPUP6,
+			BT_SPUP7,
+			BT_SPUP8,
+			BT_SPUP9,
+			BT_SPUP10,
+			BT_SPUP11
 		};
 
-		static constexpr int16_t ROWS = 4;
-		static constexpr int16_t ROW_HEIGHT = 40;
-		static constexpr Point<int16_t> SKILL_OFFSET = { 11, 93 };
-		static constexpr Point<int16_t> ICON_OFFSET = { 2, 33 };
-		static constexpr Point<int16_t> LINE_OFFSET = { 2, 37 };
+		static constexpr std::int16_t ROWS = 12;
+		static constexpr std::int16_t ROW_HEIGHT = 40;
+		static constexpr std::int16_t ROW_WIDTH = 143;
+		static constexpr Point<int16_t> SKILL_OFFSET = Point<int16_t>(11, 93);
+		static constexpr Point<int16_t> ICON_OFFSET = Point<int16_t>(2, 34);
+		static constexpr Point<int16_t> LINE_OFFSET = Point<int16_t>(0, 37);
 
 		const CharStats& stats;
 		const Skillbook& skillbook;
@@ -123,18 +154,43 @@ namespace jrc
 		Slider slider;
 		Texture skille;
 		Texture skilld;
+		Texture skillb;
 		Texture line;
 		Texture bookicon;
 		Text booktext;
 		Text splabel;
 
 		Job job;
-		int16_t sp;
+		std::int16_t sp;
+		std::int16_t beginner_sp;
 
-		uint16_t tab;
-		uint16_t skillcount;
-		uint16_t offset;
-		
+		std::uint16_t tab;
+		std::uint16_t skillcount;
+		std::uint16_t offset;
+
 		std::vector<SkillIcon> icons;
+		bool grabbing;
+
+		Point<int16_t> bg_dimensions;
+
+		bool macro_enabled;
+		Texture macro_backgrnd;
+		Texture macro_backgrnd2;
+		Texture macro_backgrnd3;
+
+		bool sp_enabled;
+		Texture sp_backgrnd;
+		Texture sp_backgrnd2;
+		Texture sp_backgrnd3;
+		Charset sp_before;
+		Charset sp_after;
+		std::string sp_before_text;
+		std::string sp_after_text;
+		Text sp_used;
+		Text sp_remaining;
+		Text sp_name;
+		Texture sp_skill;
+		std::int32_t sp_id;
+		std::int32_t sp_masterlevel;
 	};
 }

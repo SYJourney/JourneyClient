@@ -1,31 +1,30 @@
-/////////////////////////////////////////////////////////////////////////////
-// This file is part of the Journey MMORPG client                           //
-// Copyright © 2015-2016 Daniel Allendorf                                   //
-//                                                                          //
-// This program is free software: you can redistribute it and/or modify     //
-// it under the terms of the GNU Affero General Public License as           //
-// published by the Free Software Foundation, either version 3 of the       //
-// License, or (at your option) any later version.                          //
-//                                                                          //
-// This program is distributed in the hope that it will be useful,          //
-// but WITHOUT ANY WARRANTY; without even the implied warranty of           //
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            //
-// GNU Affero General Public License for more details.                      //
-//                                                                          //
-// You should have received a copy of the GNU Affero General Public License //
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.    //
-//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//	This file is part of the continued Journey MMORPG client					//
+//	Copyright (C) 2015-2019  Daniel Allendorf, Ryan Payton						//
+//																				//
+//	This program is free software: you can redistribute it and/or modify		//
+//	it under the terms of the GNU Affero General Public License as published by	//
+//	the Free Software Foundation, either version 3 of the License, or			//
+//	(at your option) any later version.											//
+//																				//
+//	This program is distributed in the hope that it will be useful,				//
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of				//
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the				//
+//	GNU Affero General Public License for more details.							//
+//																				//
+//	You should have received a copy of the GNU Affero General Public License	//
+//	along with this program.  If not, see <https://www.gnu.org/licenses/>.		//
+//////////////////////////////////////////////////////////////////////////////////
 #pragma once
+
 #include "Npc.h"
 
-#include "nlnx/node.hpp"
-#include "nlnx/nx.hpp"
+#include <nlnx/nx.hpp>
 
-namespace jrc
+namespace ms
 {
-	Npc::Npc(int32_t id, int32_t o, bool fl, uint16_t f, bool cnt, Point<int16_t> position) 
-		: MapObject(o) {
-
+	Npc::Npc(std::int32_t id, std::int32_t o, bool fl, std::uint16_t f, bool cnt, Point<int16_t> position) : MapObject(o)
+	{
 		std::string strid = std::to_string(id);
 		strid.insert(0, 7 - strid.size(), '0');
 		strid.append(".img");
@@ -34,6 +33,7 @@ namespace jrc
 		nl::node strsrc = nl::nx::string["Npc.img"][std::to_string(id)];
 
 		std::string link = src["info"]["link"];
+
 		if (link.size() > 0)
 		{
 			link.append(".img");
@@ -49,6 +49,7 @@ namespace jrc
 		for (auto npcnode : src)
 		{
 			std::string state = npcnode.name();
+
 			if (state != "info")
 			{
 				animations[state] = npcnode;
@@ -56,16 +57,14 @@ namespace jrc
 			}
 
 			for (auto speaknode : npcnode["speak"])
-			{
 				lines[state].push_back(strsrc[speaknode.get_string()]);
-			}
 		}
 
-		name = strsrc["name"];
-		func = strsrc["func"];
+		name = strsrc["name"].get_string();
+		func = strsrc["func"].get_string();
 
-		namelabel = { Text::A13B, Text::CENTER, Text::YELLOW, Text::NAMETAG, name };
-		funclabel = { Text::A13B, Text::CENTER, Text::YELLOW, Text::NAMETAG, func };
+		namelabel = Text(Text::Font::A13B, Text::Alignment::CENTER, Color::Name::YELLOW, Text::Background::NAMETAG, name);
+		funclabel = Text(Text::Font::A13B, Text::Alignment::CENTER, Color::Name::YELLOW, Text::Background::NAMETAG, func);
 
 		npcid = id;
 		flip = !fl;
@@ -79,10 +78,10 @@ namespace jrc
 	void Npc::draw(double viewx, double viewy, float alpha) const
 	{
 		Point<int16_t> absp = phobj.get_absolute(viewx, viewy, alpha);
+
 		if (animations.count(stance))
-		{
 			animations.at(stance).draw(DrawArgument(absp, flip), alpha);
-		}
+
 		if (!hidename)
 		{
 			namelabel.draw(absp);
@@ -90,7 +89,7 @@ namespace jrc
 		}
 	}
 
-	int8_t Npc::update(const Physics& physics)
+	std::int8_t Npc::update(const Physics& physics)
 	{
 		if (!active)
 			return phobj.fhlayer;
@@ -100,9 +99,10 @@ namespace jrc
 		if (animations.count(stance))
 		{
 			bool aniend = animations.at(stance).update();
+
 			if (aniend && states.size() > 0)
 			{
-				size_t next_stance = random.next_int(states.size());
+				std::size_t next_stance = random.next_int(states.size());
 				std::string new_stance = states[next_stance];
 				set_stance(new_stance);
 			}
@@ -118,6 +118,7 @@ namespace jrc
 			stance = st;
 
 			auto iter = animations.find(stance);
+
 			if (iter == animations.end())
 				return;
 
@@ -136,14 +137,16 @@ namespace jrc
 			return false;
 
 		Point<int16_t> absp = get_position() + viewpos;
-		Point<int16_t> dim = animations.count(stance) ?
+
+		Point<int16_t> dim =
+			animations.count(stance) ?
 			animations.at(stance).get_dimensions() :
 			Point<int16_t>();
 
 		return Rectangle<int16_t>(
-			absp.x() - dim.x() / 2, 
-			absp.x() + dim.x() / 2, 
-			absp.y() - dim.y(), 
+			absp.x() - dim.x() / 2,
+			absp.x() + dim.x() / 2,
+			absp.y() - dim.y(),
 			absp.y()
 			).contains(cursorpos);
 	}

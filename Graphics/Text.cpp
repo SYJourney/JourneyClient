@@ -1,46 +1,39 @@
-/////////////////////////////////////////////////////////////////////////////
-// This file is part of the Journey MMORPG client                           //
-// Copyright © 2015-2016 Daniel Allendorf                                   //
-//                                                                          //
-// This program is free software: you can redistribute it and/or modify     //
-// it under the terms of the GNU Affero General Public License as           //
-// published by the Free Software Foundation, either version 3 of the       //
-// License, or (at your option) any later version.                          //
-//                                                                          //
-// This program is distributed in the hope that it will be useful,          //
-// but WITHOUT ANY WARRANTY; without even the implied warranty of           //
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            //
-// GNU Affero General Public License for more details.                      //
-//                                                                          //
-// You should have received a copy of the GNU Affero General Public License //
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.    //
-//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//	This file is part of the continued Journey MMORPG client					//
+//	Copyright (C) 2015-2019  Daniel Allendorf, Ryan Payton						//
+//																				//
+//	This program is free software: you can redistribute it and/or modify		//
+//	it under the terms of the GNU Affero General Public License as published by	//
+//	the Free Software Foundation, either version 3 of the License, or			//
+//	(at your option) any later version.											//
+//																				//
+//	This program is distributed in the hope that it will be useful,				//
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of				//
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the				//
+//	GNU Affero General Public License for more details.							//
+//																				//
+//	You should have received a copy of the GNU Affero General Public License	//
+//	along with this program.  If not, see <https://www.gnu.org/licenses/>.		//
+//////////////////////////////////////////////////////////////////////////////////
 #include "Text.h"
 #include "GraphicsGL.h"
 
-namespace jrc
+namespace ms
 {
-	Text::Text(Font f, Alignment a, Color c, Background b,
-		const std::string& t, uint16_t mw, bool fm)
-		: font(f), alignment(a), color(c), background(b), maxwidth(mw), formatted(fm) {
-
+	Text::Text(Font f, Alignment a, Color::Name c, Background b, const std::string& t, std::uint16_t mw, bool fm, std::int16_t la) : font(f), alignment(a), color(c), background(b), maxwidth(mw), formatted(fm), line_adj(la)
+	{
 		change_text(t);
 	}
 
-	Text::Text(Font f, Alignment a, Color c,
-		const std::string& t, uint16_t mw, bool fm)
-		: Text(f, a, c, NONE, t, mw, fm) {}
-
-	Text::Text()
-		: Text(A11M, LEFT, BLACK) {}
+	Text::Text(Font f, Alignment a, Color::Name c, const std::string& t, std::uint16_t mw, bool fm, std::int16_t la) : Text(f, a, c, Background::NONE, t, mw, fm, la) {}
+	Text::Text() : Text(Font::A11M, Alignment::LEFT, Color::BLACK) {}
 
 	void Text::reset_layout()
 	{
 		if (text.empty())
 			return;
 
-		layout = GraphicsGL::get()
-			.createlayout(text, font, alignment, maxwidth, formatted);
+		layout = GraphicsGL::get().createlayout(text, font, alignment, maxwidth, formatted, line_adj);
 	}
 
 	void Text::change_text(const std::string& t)
@@ -53,7 +46,7 @@ namespace jrc
 		reset_layout();
 	}
 
-	void Text::change_color(Color c)
+	void Text::change_color(Color::Name c)
 	{
 		if (color == c)
 			return;
@@ -70,11 +63,10 @@ namespace jrc
 
 	void Text::draw(const DrawArgument& args) const
 	{
-		GraphicsGL::get()
-			.drawtext(args, text, layout, font, color, background);
+		GraphicsGL::get().drawtext(args, text, layout, font, color, background);
 	}
 
-	uint16_t Text::advance(size_t pos) const
+	std::uint16_t Text::advance(std::size_t pos) const
 	{
 		return layout.advance(pos);
 	}
@@ -84,17 +76,17 @@ namespace jrc
 		return text.empty();
 	}
 
-	size_t Text::length() const
+	std::size_t Text::length() const
 	{
 		return text.size();
 	}
 
-	int16_t Text::width() const
+	std::int16_t Text::width() const
 	{
 		return layout.width();
 	}
 
-	int16_t Text::height() const
+	std::int16_t Text::height() const
 	{
 		return layout.height();
 	}
@@ -114,25 +106,20 @@ namespace jrc
 		return text;
 	}
 
+	Text::Layout::Layout(const std::vector<Layout::Line>& l, const std::vector<int16_t>& a, std::int16_t w, std::int16_t h, std::int16_t ex, std::int16_t ey) : lines(l), advances(a), dimensions(w, h), endoffset(ex, ey) {}
+	Text::Layout::Layout() : Layout(std::vector<Layout::Line>(), std::vector<int16_t>(), 0, 0, 0, 0) {}
 
-	Text::Layout::Layout(const std::vector<Line>& l, const std::vector<int16_t>& a,
-		int16_t w, int16_t h, int16_t ex, int16_t ey)
-		: lines(l), advances(a), dimensions(w, h), endoffset(ex, ey) {}
-
-	Text::Layout::Layout()
-		: Layout({}, {}, 0, 0, 0, 0) {}
-
-	int16_t Text::Layout::width() const
+	std::int16_t Text::Layout::width() const
 	{
 		return dimensions.x();
 	}
 
-	int16_t Text::Layout::height() const
+	std::int16_t Text::Layout::height() const
 	{
 		return dimensions.y();
 	}
 
-	int16_t Text::Layout::advance(size_t index) const
+	std::int16_t Text::Layout::advance(std::size_t index) const
 	{
 		return index < advances.size() ? advances[index] : 0;
 	}

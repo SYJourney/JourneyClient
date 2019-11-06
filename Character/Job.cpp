@@ -1,25 +1,25 @@
-/////////////////////////////////////////////////////////////////////////////
-// This file is part of the Journey MMORPG client                           //
-// Copyright © 2015-2016 Daniel Allendorf                                   //
-//                                                                          //
-// This program is free software: you can redistribute it and/or modify     //
-// it under the terms of the GNU Affero General Public License as           //
-// published by the Free Software Foundation, either version 3 of the       //
-// License, or (at your option) any later version.                          //
-//                                                                          //
-// This program is distributed in the hope that it will be useful,          //
-// but WITHOUT ANY WARRANTY; without even the implied warranty of           //
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            //
-// GNU Affero General Public License for more details.                      //
-//                                                                          //
-// You should have received a copy of the GNU Affero General Public License //
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.    //
-//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//	This file is part of the continued Journey MMORPG client					//
+//	Copyright (C) 2015-2019  Daniel Allendorf, Ryan Payton						//
+//																				//
+//	This program is free software: you can redistribute it and/or modify		//
+//	it under the terms of the GNU Affero General Public License as published by	//
+//	the Free Software Foundation, either version 3 of the License, or			//
+//	(at your option) any later version.											//
+//																				//
+//	This program is distributed in the hope that it will be useful,				//
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of				//
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the				//
+//	GNU Affero General Public License for more details.							//
+//																				//
+//	You should have received a copy of the GNU Affero General Public License	//
+//	along with this program.  If not, see <https://www.gnu.org/licenses/>.		//
+//////////////////////////////////////////////////////////////////////////////////
 #include "Job.h"
 
-namespace jrc
+namespace ms
 {
-	Job::Job(uint16_t i)
+	Job::Job(std::uint16_t i)
 	{
 		change_job(i);
 	}
@@ -29,73 +29,66 @@ namespace jrc
 		change_job(0);
 	}
 
-	void Job::change_job(uint16_t i)
+	void Job::change_job(std::uint16_t i)
 	{
 		id = i;
 		name = get_name(id);
 
 		if (id == 0)
-		{
-			level = BEGINNER;
-		}
+			level = Level::BEGINNER;
 		else if (id % 100 == 0)
-		{
-			level = FIRST;
-		}
+			level = Level::FIRST;
 		else if (id % 10 == 0)
-		{
-			level = SECOND;
-		}
+			level = Level::SECOND;
 		else if (id % 10 == 1)
-		{
-			level = THIRD;
-		}
+			level = Level::THIRD;
 		else
-		{
-			level = FOURTHT;
-		}
+			level = Level::FOURTH;
 	}
 
-	bool Job::is_sub_job(uint16_t subid) const
+	bool Job::is_sub_job(std::uint16_t subid) const
 	{
-		for (int32_t lvit = BEGINNER; lvit <= FOURTHT; lvit++)
+		for (std::int32_t lvit = BEGINNER; lvit <= FOURTH; lvit++)
 		{
 			Level lv = static_cast<Level>(lvit);
+
 			if (subid == get_subjob(lv))
 				return true;
 		}
+
 		return false;
 	}
 
-	bool Job::can_use(int32_t skill_id) const
+	bool Job::can_use(std::int32_t skill_id) const
 	{
-		uint16_t required = static_cast<uint16_t>(skill_id / 10000);
+		std::uint16_t required = static_cast<std::uint16_t>(skill_id / 10000);
 		return is_sub_job(required);
 	}
 
-	uint16_t Job::get_id() const
+	std::uint16_t Job::get_id() const
 	{
 		return id;
 	}
 
-	uint16_t Job::get_subjob(Level lv) const
+	std::uint16_t Job::get_subjob(Level lv) const
 	{
 		if (lv <= level)
 		{
 			switch (lv)
 			{
-			case BEGINNER:
+			case Level::BEGINNER:
 				return 0;
-			case FIRST:
+			case Level::FIRST:
 				return (id / 100) * 100;
-			case SECOND:
+			case Level::SECOND:
 				return (id / 10) * 10;
-			case THIRD:
-				return (level == FOURTHT) ? id - 1 : id;
-			case FOURTHT:
+			case Level::THIRD:
+				return (level == Level::FOURTH) ? id - 1 : id;
+			case Level::FOURTH:
 				return id;
 			}
 		}
+
 		return 0;
 	}
 
@@ -109,7 +102,7 @@ namespace jrc
 		return level;
 	}
 
-	std::string Job::get_name(uint16_t jid) const
+	std::string Job::get_name(std::uint16_t jid) const
 	{
 		switch (jid)
 		{
@@ -197,12 +190,18 @@ namespace jrc
 			return "Outlaw";
 		case 522:
 			return "Corsair";
+		case 1000:
+			return "Noblesse";
 		case 2000:
 		case 2100:
 		case 2110:
 		case 2111:
 		case 2112:
 			return "Aran";
+		case 900:
+			return "GM";
+		case 910:
+			return "SuperGM";
 		default:
 			return "";
 		}
@@ -213,15 +212,15 @@ namespace jrc
 		switch (id / 100)
 		{
 		case 2:
-			return Equipstat::INT;
+			return Equipstat::Id::INT;
 		case 3:
-			return Equipstat::DEX;
+			return Equipstat::Id::DEX;
 		case 4:
-			return Equipstat::LUK;
+			return Equipstat::Id::LUK;
 		case 5:
-			return (weapontype == Weapon::GUN) ? Equipstat::DEX : Equipstat::STR;
+			return (weapontype == Weapon::Type::GUN) ? Equipstat::Id::DEX : Equipstat::Id::STR;
 		default:
-			return Equipstat::STR;
+			return Equipstat::Id::STR;
 		}
 	}
 
@@ -230,15 +229,15 @@ namespace jrc
 		switch (id / 100)
 		{
 		case 2:
-			return Equipstat::LUK;
+			return Equipstat::Id::LUK;
 		case 3:
-			return Equipstat::STR;
+			return Equipstat::Id::STR;
 		case 4:
-			return Equipstat::DEX;
+			return Equipstat::Id::DEX;
 		case 5:
-			return (weapontype == Weapon::GUN) ? Equipstat::STR : Equipstat::DEX;
+			return (weapontype == Weapon::Type::GUN) ? Equipstat::Id::STR : Equipstat::Id::DEX;
 		default:
-			return Equipstat::DEX;
+			return Equipstat::Id::DEX;
 		}
 	}
 }
