@@ -1,42 +1,46 @@
-/////////////////////////////////////////////////////////////////////////////
-// This file is part of the Journey MMORPG client                           //
-// Copyright © 2015-2016 Daniel Allendorf                                   //
-//                                                                          //
-// This program is free software: you can redistribute it and/or modify     //
-// it under the terms of the GNU Affero General Public License as           //
-// published by the Free Software Foundation, either version 3 of the       //
-// License, or (at your option) any later version.                          //
-//                                                                          //
-// This program is distributed in the hope that it will be useful,          //
-// but WITHOUT ANY WARRANTY; without even the implied warranty of           //
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            //
-// GNU Affero General Public License for more details.                      //
-//                                                                          //
-// You should have received a copy of the GNU Affero General Public License //
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.    //
-//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//	This file is part of the continued Journey MMORPG client					//
+//	Copyright (C) 2015-2019  Daniel Allendorf, Ryan Payton						//
+//																				//
+//	This program is free software: you can redistribute it and/or modify		//
+//	it under the terms of the GNU Affero General Public License as published by	//
+//	the Free Software Foundation, either version 3 of the License, or			//
+//	(at your option) any later version.											//
+//																				//
+//	This program is distributed in the hope that it will be useful,				//
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of				//
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the				//
+//	GNU Affero General Public License for more details.							//
+//																				//
+//	You should have received a copy of the GNU Affero General Public License	//
+//	along with this program.  If not, see <https://www.gnu.org/licenses/>.		//
+//////////////////////////////////////////////////////////////////////////////////
 #pragma once
+
 #include "DrawArgument.h"
 
-#include <cstdint>
 #include <map>
 #include <vector>
 
-namespace jrc
+namespace ms
 {
 	class Text
 	{
 	public:
 		enum Font
 		{
-			A11L,
 			A11M,
 			A11B,
 			A12M,
 			A12B,
 			A13M,
 			A13B,
+			A14M,
+			A14B,
+			A15M,
+			A15B,
 			A18M,
+			A18B,
 			NUM_FONTS
 		};
 
@@ -45,23 +49,6 @@ namespace jrc
 			LEFT,
 			CENTER,
 			RIGHT
-		};
-
-		enum Color
-		{
-			BLACK,
-			WHITE,
-			YELLOW,
-			BLUE,
-			RED,
-			DARKRED,
-			BROWN,
-			LIGHTGREY,
-			DARKGREY,
-			ORANGE,
-			MEDIUMBLUE,
-			VIOLET,
-			NUM_COLORS
 		};
 
 		enum Background
@@ -78,7 +65,7 @@ namespace jrc
 				size_t first;
 				size_t last;
 				Font font;
-				Color color;
+				Color::Name color;
 			};
 
 			struct Line
@@ -87,8 +74,7 @@ namespace jrc
 				Point<int16_t> position;
 			};
 
-			Layout(const std::vector<Line>& lines, const std::vector<int16_t>& advances,
-				int16_t width, int16_t height, int16_t endx, int16_t endy);
+			Layout(const std::vector<Line>& lines, const std::vector<int16_t>& advances, int16_t width, int16_t height, int16_t endx, int16_t endy);
 			Layout();
 
 			int16_t width() const;
@@ -108,16 +94,15 @@ namespace jrc
 			Point<int16_t> endoffset;
 		};
 
-		Text(Font font, Alignment alignment, Color color, Background background, 
-			const std::string& text = "", uint16_t maxwidth = 0, bool formatted = true);
-		Text(Font font, Alignment alignment, Color color, 
-			const std::string& text = "", uint16_t maxwidth = 0, bool formatted = true);
+		Text(Font font, Alignment alignment, Color::Name color, Background background, const std::string& text = "", uint16_t maxwidth = 0, bool formatted = true, int16_t line_adj = 0);
+		Text(Font font, Alignment alignment, Color::Name color, const std::string& text = "", uint16_t maxwidth = 0, bool formatted = true, int16_t line_adj = 0);
 		Text();
 
 		void draw(const DrawArgument& args) const;
+		void draw(const DrawArgument& args, const Range<int16_t>& vertical) const;
 
 		void change_text(const std::string& text);
-		void change_color(Color color);
+		void change_color(Color::Name color);
 		void set_background(Background background);
 
 		bool empty() const;
@@ -134,11 +119,12 @@ namespace jrc
 
 		Font font;
 		Alignment alignment;
-		Color color;
+		Color::Name color;
 		Background background;
 		Layout layout;
 		uint16_t maxwidth;
 		bool formatted;
 		std::string text;
+		int16_t line_adj;
 	};
 }

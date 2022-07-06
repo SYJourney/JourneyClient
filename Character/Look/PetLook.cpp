@@ -1,55 +1,53 @@
-/////////////////////////////////////////////////////////////////////////////
-// This file is part of the Journey MMORPG client                           //
-// Copyright © 2015-2016 Daniel Allendorf                                   //
-//                                                                          //
-// This program is free software: you can redistribute it and/or modify     //
-// it under the terms of the GNU Affero General Public License as           //
-// published by the Free Software Foundation, either version 3 of the       //
-// License, or (at your option) any later version.                          //
-//                                                                          //
-// This program is distributed in the hope that it will be useful,          //
-// but WITHOUT ANY WARRANTY; without even the implied warranty of           //
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            //
-// GNU Affero General Public License for more details.                      //
-//                                                                          //
-// You should have received a copy of the GNU Affero General Public License //
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.    //
-//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//	This file is part of the continued Journey MMORPG client					//
+//	Copyright (C) 2015-2019  Daniel Allendorf, Ryan Payton						//
+//																				//
+//	This program is free software: you can redistribute it and/or modify		//
+//	it under the terms of the GNU Affero General Public License as published by	//
+//	the Free Software Foundation, either version 3 of the License, or			//
+//	(at your option) any later version.											//
+//																				//
+//	This program is distributed in the hope that it will be useful,				//
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of				//
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the				//
+//	GNU Affero General Public License for more details.							//
+//																				//
+//	You should have received a copy of the GNU Affero General Public License	//
+//	along with this program.  If not, see <https://www.gnu.org/licenses/>.		//
+//////////////////////////////////////////////////////////////////////////////////
 #include "PetLook.h"
 
-#include "../../Constants.h"
+#ifdef USE_NX
+#include <nlnx/nx.hpp>
+#endif
 
-#include "nlnx/nx.hpp"
-#include "nlnx/node.hpp"
-
-namespace jrc
+namespace ms
 {
-	PetLook::PetLook(int32_t iid, std::string nm, int32_t uqid,
-		Point<int16_t> pos, uint8_t st, int32_t) {
-
+	PetLook::PetLook(int32_t iid, std::string nm, int32_t uqid, Point<int16_t> pos, uint8_t st, int32_t)
+	{
 		itemid = iid;
 		name = nm;
 		uniqueid = uqid;
+
 		set_position(pos.x(), pos.y());
 		set_stance(st);
 
-		namelabel = { Text::A13M, Text::CENTER, Text::WHITE, Text::NAMETAG, name };
+		namelabel = Text(Text::Font::A13M, Text::Alignment::CENTER, Color::Name::WHITE, Text::Background::NAMETAG, name);
 
 		std::string strid = std::to_string(iid);
+		nl::node src = nl::nx::Item["Pet"][strid + ".img"];
 
-		nl::node src = nl::nx::item["Pet"][strid + ".img"];
+		animations[Stance::MOVE] = src["move"];
+		animations[Stance::STAND] = src["stand0"];
+		animations[Stance::JUMP] = src["jump"];
+		animations[Stance::ALERT] = src["alert"];
+		animations[Stance::PRONE] = src["prone"];
+		animations[Stance::FLY] = src["fly"];
+		animations[Stance::HANG] = src["hang"];
 
-		animations[MOVE] = src["move"];
-		animations[STAND] = src["stand0"];
-		animations[JUMP] = src["jump"];
-		animations[ALERT] = src["alert"];
-		animations[PRONE] = src["prone"];
-		animations[FLY] = src["fly"];
-		animations[HANG] = src["hang"];
+		nl::node effsrc = nl::nx::Effect["PetEff.img"][strid];
 
-		nl::node effsrc = nl::nx::effect["PetEff.img"][strid];
-
-		animations[WARP] = effsrc["warp"];
+		animations[Stance::WARP] = effsrc["warp"];
 	}
 
 	PetLook::PetLook()
@@ -74,10 +72,11 @@ namespace jrc
 		static const double PETFLYFORCE = 0.2;
 
 		Point<int16_t> curpos = phobj.get_position();
+
 		switch (stance)
 		{
-		case STAND:
-		case MOVE:
+		case Stance::STAND:
+		case Stance::MOVE:
 			if (curpos.distance(charpos) > 150)
 			{
 				set_position(charpos.x(), charpos.y());
@@ -88,28 +87,32 @@ namespace jrc
 				{
 					phobj.hforce = PETWALKFORCE;
 					flip = true;
-					set_stance(MOVE);
+
+					set_stance(Stance::MOVE);
 				}
 				else if (charpos.x() - curpos.x() < -50)
 				{
 					phobj.hforce = -PETWALKFORCE;
 					flip = false;
-					set_stance(MOVE);
+
+					set_stance(Stance::MOVE);
 				}
 				else
 				{
 					phobj.hforce = 0.0;
-					set_stance(STAND);
+
+					set_stance(Stance::STAND);
 				}
 			}
-			phobj.type = PhysicsObject::NORMAL;
-			phobj.clear_flag(PhysicsObject::NOGRAVITY);
+
+			phobj.type = PhysicsObject::Type::NORMAL;
+			phobj.clear_flag(PhysicsObject::Flag::NOGRAVITY);
 			break;
-		case HANG:
+		case Stance::HANG:
 			set_position(charpos.x(), charpos.y());
-			phobj.set_flag(PhysicsObject::NOGRAVITY);
+			phobj.set_flag(PhysicsObject::Flag::NOGRAVITY);
 			break;
-		case FLY:
+		case Stance::FLY:
 			if ((charpos - curpos).length() > 250)
 			{
 				set_position(charpos.x(), charpos.y());
@@ -138,8 +141,9 @@ namespace jrc
 				else
 					phobj.vforce = 0.0f;
 			}
-			phobj.type = PhysicsObject::FLYING;
-			phobj.clear_flag(PhysicsObject::NOGRAVITY);
+
+			phobj.type = PhysicsObject::Type::FLYING;
+			phobj.clear_flag(PhysicsObject::Flag::NOGRAVITY);
 			break;
 		}
 

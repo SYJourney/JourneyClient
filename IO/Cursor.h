@@ -1,31 +1,32 @@
-/////////////////////////////////////////////////////////////////////////////
-// This file is part of the Journey MMORPG client                           //
-// Copyright © 2015-2016 Daniel Allendorf                                   //
-//                                                                          //
-// This program is free software: you can redistribute it and/or modify     //
-// it under the terms of the GNU Affero General Public License as           //
-// published by the Free Software Foundation, either version 3 of the       //
-// License, or (at your option) any later version.                          //
-//                                                                          //
-// This program is distributed in the hope that it will be useful,          //
-// but WITHOUT ANY WARRANTY; without even the implied warranty of           //
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            //
-// GNU Affero General Public License for more details.                      //
-//                                                                          //
-// You should have received a copy of the GNU Affero General Public License //
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.    //
-//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//	This file is part of the continued Journey MMORPG client					//
+//	Copyright (C) 2015-2019  Daniel Allendorf, Ryan Payton						//
+//																				//
+//	This program is free software: you can redistribute it and/or modify		//
+//	it under the terms of the GNU Affero General Public License as published by	//
+//	the Free Software Foundation, either version 3 of the License, or			//
+//	(at your option) any later version.											//
+//																				//
+//	This program is distributed in the hope that it will be useful,				//
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of				//
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the				//
+//	GNU Affero General Public License for more details.							//
+//																				//
+//	You should have received a copy of the GNU Affero General Public License	//
+//	along with this program.  If not, see <https://www.gnu.org/licenses/>.		//
+//////////////////////////////////////////////////////////////////////////////////
 #pragma once
+
 #include "../Graphics/Animation.h"
 #include "../Template/EnumMap.h"
 
-namespace jrc
+namespace ms
 {
-	// Class that represents the mouse cursor.
+	// Class that represents the mouse cursor
 	class Cursor
 	{
 	public:
-		// Maple-cursorstates, linked to the cursor's animation.
+		// Maple cursor states that are linked to the cursor's animation
 		enum State
 		{
 			IDLE,
@@ -42,6 +43,12 @@ namespace jrc
 			GRABBING,
 			CLICKING,
 			RCLICK,
+			LEAF = 18,
+			CHATBARVDRAG = 67,
+			CHATBARHDRAG,
+			CHATBARBLTRDRAG,
+			CHATBARMOVE = 72,
+			CHATBARBRTLDRAG,
 			LENGTH
 		};
 
@@ -52,7 +59,7 @@ namespace jrc
 		void draw(float alpha) const;
 		void update();
 		void set_state(State state);
-		void set_position(Point<int16_t> position);
+		void set_position(Point<int16_t> cursor_position);
 		State get_state() const;
 		Point<int16_t> get_position() const;
 
@@ -66,4 +73,3 @@ namespace jrc
 		static constexpr int64_t HIDE_TIME = 15'000;
 	};
 }
-

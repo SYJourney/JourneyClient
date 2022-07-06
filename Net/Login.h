@@ -1,56 +1,56 @@
-//////////////////////////////////////////////////////////////////////////////
-// This file is part of the Journey MMORPG client                           //
-// Copyright © 2015-2016 Daniel Allendorf                                   //
-//                                                                          //
-// This program is free software: you can redistribute it and/or modify     //
-// it under the terms of the GNU Affero General Public License as           //
-// published by the Free Software Foundation, either version 3 of the       //
-// License, or (at your option) any later version.                          //
-//                                                                          //
-// This program is distributed in the hope that it will be useful,          //
-// but WITHOUT ANY WARRANTY; without even the implied warranty of           //
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            //
-// GNU Affero General Public License for more details.                      //
-//                                                                          //
-// You should have received a copy of the GNU Affero General Public License //
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.    //
-//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//	This file is part of the continued Journey MMORPG client					//
+//	Copyright (C) 2015-2019  Daniel Allendorf, Ryan Payton						//
+//																				//
+//	This program is free software: you can redistribute it and/or modify		//
+//	it under the terms of the GNU Affero General Public License as published by	//
+//	the Free Software Foundation, either version 3 of the License, or			//
+//	(at your option) any later version.											//
+//																				//
+//	This program is distributed in the hope that it will be useful,				//
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of				//
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the				//
+//	GNU Affero General Public License for more details.							//
+//																				//
+//	You should have received a copy of the GNU Affero General Public License	//
+//	along with this program.  If not, see <https://www.gnu.org/licenses/>.		//
+//////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "../Character/Maplestat.h"
-#include "../Template/EnumMap.h"
 
-#include <cstdint>
-#include <string>
-#include <vector>
+#include "../Character/MapleStat.h"
+
 #include <map>
+#include <vector>
 
-namespace jrc
+namespace ms
 {
 	struct Account
 	{
-		std::string name;
 		int32_t accid;
-		bool female;
+		int8_t female;
+		bool admin;
+		std::string name;
 		bool muted;
-		int16_t pin;
-		int8_t gmlevel;
+		bool pin;
+		int8_t pic;
 	};
 
 	struct World
 	{
 		std::string name;
-		std::string message;
-		std::vector<int32_t> chloads;
-		uint8_t channelcount;
+		std::string event_message;
+		std::vector<int32_t> channel_capacities;
+		uint8_t channel_count;
 		uint8_t flag;
-		int8_t wid;
+		int8_t id;
 	};
 
 	struct StatsEntry
 	{
 		std::string name;
+		bool female;
 		std::vector<int64_t> petids;
-		EnumMap<Maplestat::Id, uint16_t> stats;
+		EnumMap<MapleStat::Id, uint16_t> stats;
 		int64_t exp;
 		int32_t mapid;
 		uint8_t portal;
@@ -73,6 +73,6 @@ namespace jrc
 	{
 		StatsEntry stats;
 		LookEntry look;
-		int32_t cid;
+		int32_t id;
 	};
 }

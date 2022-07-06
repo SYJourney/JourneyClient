@@ -1,31 +1,32 @@
-/////////////////////////////////////////////////////////////////////////////
-// This file is part of the Journey MMORPG client                           //
-// Copyright © 2015-2016 Daniel Allendorf                                   //
-//                                                                          //
-// This program is free software: you can redistribute it and/or modify     //
-// it under the terms of the GNU Affero General Public License as           //
-// published by the Free Software Foundation, either version 3 of the       //
-// License, or (at your option) any later version.                          //
-//                                                                          //
-// This program is distributed in the hope that it will be useful,          //
-// but WITHOUT ANY WARRANTY; without even the implied warranty of           //
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            //
-// GNU Affero General Public License for more details.                      //
-//                                                                          //
-// You should have received a copy of the GNU Affero General Public License //
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.    //
-//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//	This file is part of the continued Journey MMORPG client					//
+//	Copyright (C) 2015-2019  Daniel Allendorf, Ryan Payton						//
+//																				//
+//	This program is free software: you can redistribute it and/or modify		//
+//	it under the terms of the GNU Affero General Public License as published by	//
+//	the Free Software Foundation, either version 3 of the License, or			//
+//	(at your option) any later version.											//
+//																				//
+//	This program is distributed in the hope that it will be useful,				//
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of				//
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the				//
+//	GNU Affero General Public License for more details.							//
+//																				//
+//	You should have received a copy of the GNU Affero General Public License	//
+//	along with this program.  If not, see <https://www.gnu.org/licenses/>.		//
+//////////////////////////////////////////////////////////////////////////////////
 #include "Player.h"
+
 #include "PlayerStates.h"
 
-#include "../Constants.h"
 #include "../Data/WeaponData.h"
 #include "../IO/UI.h"
-#include "../IO/UITypes/UIStatsinfo.h"
+
+#include "../IO/UITypes/UIStatsInfo.h"
 #include "../Net/Packets/GameplayPackets.h"
 #include "../Net/Packets/InventoryPackets.h"
 
-namespace jrc
+namespace ms
 {
 	const PlayerNullState nullstate;
 
@@ -41,38 +42,36 @@ namespace jrc
 
 		switch (state)
 		{
-		case Char::STAND:
-			return &standing;
-		case Char::WALK:
-			return &walking;
-		case Char::FALL:
-			return &falling;
-		case Char::PRONE:
-			return &lying;
-		case Char::LADDER:
-		case Char::ROPE:
-			return &climbing;
-		case Char::SIT:
-			return &sitting;
-		case Char::SWIM:
-			return &flying;
-		default:
-			return nullptr;
+			case Char::State::STAND:
+				return &standing;
+			case Char::State::WALK:
+				return &walking;
+			case Char::State::FALL:
+				return &falling;
+			case Char::State::PRONE:
+				return &lying;
+			case Char::State::LADDER:
+			case Char::State::ROPE:
+				return &climbing;
+			case Char::State::SIT:
+				return &sitting;
+			case Char::State::SWIM:
+				return &flying;
+			default:
+				return nullptr;
 		}
 	}
 
-	Player::Player(const CharEntry& entry)
-		: Char(entry.cid, entry.look, entry.stats.name), stats(entry.stats) {
-
+	Player::Player(const CharEntry& entry) : Char(entry.id, entry.look, entry.stats.name), stats(entry.stats)
+	{
 		attacking = false;
 		underwater = false;
 
-		set_state(STAND);
-		set_direction(false);
+		set_state(Char::State::STAND);
+		set_direction(true);
 	}
 
-	Player::Player() 
-		: Char(0, {}, "") {}
+	Player::Player() : Char(0, {}, "") {}
 
 	void Player::respawn(Point<int16_t> pos, bool uw)
 	{
@@ -87,10 +86,10 @@ namespace jrc
 	void Player::send_action(KeyAction::Id action, bool down)
 	{
 		const PlayerState* pst = get_state(state);
+
 		if (pst)
-		{
 			pst->send_action(*this, action, down);
-		}
+
 		keysdown[action] = down;
 	}
 
@@ -102,17 +101,16 @@ namespace jrc
 		stats.init_totalstats();
 
 		if (equipchanged)
-		{
 			inventory.recalc_stats(weapontype);
-		}
 
-		for (auto stat : Equipstat::values)
+		for (auto stat : EquipStat::values)
 		{
 			int32_t inventory_total = inventory.get_stat(stat);
 			stats.add_value(stat, inventory_total);
 		}
 
 		auto passive_skills = skillbook.collect_passives();
+
 		for (auto& passive : passive_skills)
 		{
 			int32_t skill_id = passive.first;
@@ -122,59 +120,48 @@ namespace jrc
 		}
 
 		for (const Buff& buff : buffs.values())
-		{
 			active_buffs.apply_buff(stats, buff.stat, buff.value);
-		}
 
 		stats.close_totalstats();
 
-		if (auto statsinfo = UI::get().get_element<UIStatsinfo>())
+		if (auto statsinfo = UI::get().get_element<UIStatsInfo>())
 			statsinfo->update_all_stats();
 	}
 
 	void Player::change_equip(int16_t slot)
 	{
-		if (int32_t itemid = inventory.get_item_id(InventoryType::EQUIPPED, slot))
-		{
+		if (int32_t itemid = inventory.get_item_id(InventoryType::Id::EQUIPPED, slot))
 			look.add_equip(itemid);
-		}
 		else
-		{
-			look.remove_equip(Equipslot::by_id(slot));
-		}
+			look.remove_equip(EquipSlot::by_id(slot));
 	}
 
 	void Player::use_item(int32_t itemid)
 	{
 		InventoryType::Id type = InventoryType::by_item_id(itemid);
+
 		if (int16_t slot = inventory.find_item(type, itemid))
-		{
-			switch (type)
-			{
-			case InventoryType::USE:
+			if (type == InventoryType::Id::USE)
 				UseItemPacket(slot, itemid).dispatch();
-				break;
-			}
-		}
 	}
 
 	void Player::draw(Layer::Id layer, double viewx, double viewy, float alpha) const
 	{
 		if (layer == get_layer())
-		{
 			Char::draw(viewx, viewy, alpha);
-		}
 	}
 
 	int8_t Player::update(const Physics& physics)
 	{
 		const PlayerState* pst = get_state(state);
+
 		if (pst)
 		{
 			pst->update(*this);
 			physics.move_object(phobj);
 
 			bool aniend = Char::update(physics, get_stancespeed());
+
 			if (aniend && attacking)
 			{
 				attacking = false;
@@ -186,14 +173,17 @@ namespace jrc
 			}
 		}
 
-		uint8_t stancebyte = flip ? state : state + 1;
+		uint8_t stancebyte = facing_right ? state : state + 1;
 		Movement newmove(phobj, stancebyte);
 		bool needupdate = lastmove.hasmoved(newmove);
+
 		if (needupdate)
 		{
 			MovePlayerPacket(newmove).dispatch();
 			lastmove = newmove;
 		}
+
+		climb_cooldown.update();
 
 		return get_layer();
 	}
@@ -201,6 +191,7 @@ namespace jrc
 	int8_t Player::get_integer_attackspeed() const
 	{
 		int32_t weapon_id = look.get_equips().get_weapon();
+
 		if (weapon_id <= 0)
 			return 0;
 
@@ -208,6 +199,7 @@ namespace jrc
 
 		int8_t base_speed = stats.get_attackspeed();
 		int8_t weapon_speed = weapon.get_speed();
+
 		return base_speed + weapon_speed;
 	}
 
@@ -224,10 +216,9 @@ namespace jrc
 			Char::set_state(st);
 
 			const PlayerState* pst = get_state(st);
+
 			if (pst)
-			{
 				pst->initialize(*this);
-			}
 		}
 	}
 
@@ -243,21 +234,22 @@ namespace jrc
 
 	SpecialMove::ForbidReason Player::can_use(const SpecialMove& move) const
 	{
-		if (move.is_skill() && state == PRONE)
-			return SpecialMove::FBR_OTHER;
+		if (move.is_skill() && state == Char::State::PRONE)
+			return SpecialMove::ForbidReason::FBR_OTHER;
 
-		if (move.is_attack() && (state == LADDER || state == ROPE))
-			return SpecialMove::FBR_OTHER;
+		if (move.is_attack() && (state == Char::State::LADDER || state == Char::State::ROPE))
+			return SpecialMove::ForbidReason::FBR_OTHER;
 
 		if (has_cooldown(move.get_id()))
-			return SpecialMove::FBR_COOLDOWN;
+			return SpecialMove::ForbidReason::FBR_COOLDOWN;
 
 		int32_t level = skillbook.get_level(move.get_id());
 		Weapon::Type weapon = get_weapontype();
 		const Job& job = stats.get_job();
-		uint16_t hp = stats.get_stat(Maplestat::HP);
-		uint16_t mp = stats.get_stat(Maplestat::MP);
+		uint16_t hp = stats.get_stat(MapleStat::Id::HP);
+		uint16_t mp = stats.get_stat(MapleStat::Id::MP);
 		uint16_t bullets = inventory.get_bulletcount();
+
 		return move.can_use(level, weapon, job, hp, mp, bullets);
 	}
 
@@ -265,31 +257,41 @@ namespace jrc
 	{
 		Attack::Type attacktype;
 		bool degenerate;
-		if (state == PRONE)
+
+		if (state == Char::State::PRONE)
 		{
 			degenerate = true;
-			attacktype = Attack::CLOSE;
+			attacktype = Attack::Type::CLOSE;
 		}
 		else
 		{
-			Weapon::Type weapontype = get_weapontype();
+			Weapon::Type weapontype;
+			weapontype = get_weapontype();
+
 			switch (weapontype)
 			{
-			case Weapon::BOW:
-			case Weapon::CROSSBOW:
-			case Weapon::CLAW:
-			case Weapon::GUN:
-				degenerate = !inventory.has_projectile();
-				attacktype = degenerate ? Attack::CLOSE : Attack::RANGED;
-				break;
-			case Weapon::WAND:
-			case Weapon::STAFF:
-				degenerate = !skill;
-				attacktype = degenerate ? Attack::CLOSE : Attack::MAGIC;
-				break;
-			default:
-				attacktype = Attack::CLOSE;
-				degenerate = false;
+				case Weapon::Type::BOW:
+				case Weapon::Type::CROSSBOW:
+				case Weapon::Type::CLAW:
+				case Weapon::Type::GUN:
+				{
+					degenerate = !inventory.has_projectile();
+					attacktype = degenerate ? Attack::Type::CLOSE : Attack::Type::RANGED;
+					break;
+				}
+				case Weapon::Type::WAND:
+				case Weapon::Type::STAFF:
+				{
+					degenerate = !skill;
+					attacktype = degenerate ? Attack::Type::CLOSE : Attack::Type::MAGIC;
+					break;
+				}
+				default:
+				{
+					attacktype = Attack::Type::CLOSE;
+					degenerate = false;
+					break;
+				}
 			}
 		}
 
@@ -297,19 +299,21 @@ namespace jrc
 		attack.type = attacktype;
 		attack.mindamage = stats.get_mindamage();
 		attack.maxdamage = stats.get_maxdamage();
+
 		if (degenerate)
 		{
 			attack.mindamage /= 10;
 			attack.maxdamage /= 10;
 		}
+
 		attack.critical = stats.get_critical();
 		attack.ignoredef = stats.get_ignoredef();
-		attack.accuracy = stats.get_total(Equipstat::ACC);
-		attack.playerlevel = stats.get_stat(Maplestat::LEVEL);
+		attack.accuracy = stats.get_total(EquipStat::Id::ACC);
+		attack.playerlevel = stats.get_stat(MapleStat::Id::LEVEL);
 		attack.range = stats.get_range();
 		attack.bullet = inventory.get_bulletid();
 		attack.origin = get_position();
-		attack.toleft = !flip;
+		attack.toleft = !facing_right;
 		attack.speed = get_integer_attackspeed();
 
 		return attack;
@@ -321,16 +325,16 @@ namespace jrc
 		{
 			uint16_t delay = get_attackdelay(1);
 			phobj.movexuntil(targetx, delay);
-			phobj.set_flag(PhysicsObject::TURNATEDGES);
+			phobj.set_flag(PhysicsObject::Flag::TURNATEDGES);
 		}
 	}
 
 	bool Player::is_invincible() const
 	{
-		if (state == DIED)
+		if (state == Char::State::DIED)
 			return true;
 
-		if (has_buff(Buffstat::DARKSIGHT))
+		if (has_buff(Buffstat::Id::DARKSIGHT))
 			return true;
 
 		return Char::is_invincible();
@@ -344,8 +348,9 @@ namespace jrc
 		bool fromleft = attack.origin.x() > phobj.get_x();
 
 		bool missed = damage <= 0;
-		bool immovable = ladder || state == DIED;
+		bool immovable = ladder || state == Char::State::DIED;
 		bool knockback = !missed && !immovable;
+
 		if (knockback && randomizer.above(stats.get_stance()))
 		{
 			phobj.hspeed = fromleft ? -1.5 : 1.5;
@@ -353,7 +358,8 @@ namespace jrc
 		}
 
 		uint8_t direction = fromleft ? 0 : 1;
-		return{ attack, damage, direction };
+
+		return { attack, damage, direction };
 	}
 
 	void Player::give_buff(Buff buff)
@@ -371,16 +377,13 @@ namespace jrc
 		return buffs[stat].value > 0;
 	}
 
-	void Player::change_skill(int32_t skill_id, int32_t skill_level,
-		int32_t masterlevel, int64_t expiration) {
-
+	void Player::change_skill(int32_t skill_id, int32_t skill_level, int32_t masterlevel, int64_t expiration)
+	{
 		int32_t old_level = skillbook.get_level(skill_id);
 		skillbook.set_skill(skill_id, skill_level, masterlevel, expiration);
 
 		if (old_level != skill_level)
-		{
 			recalc_stats(false);
-		}
 	}
 
 	void Player::add_cooldown(int32_t skill_id, int32_t cooltime)
@@ -391,6 +394,7 @@ namespace jrc
 	bool Player::has_cooldown(int32_t skill_id) const
 	{
 		auto iter = cooldowns.find(skill_id);
+
 		if (iter == cooldowns.end())
 			return false;
 
@@ -400,16 +404,16 @@ namespace jrc
 	void Player::change_level(uint16_t level)
 	{
 		uint16_t oldlevel = get_level();
+
 		if (level > oldlevel)
-		{
-			show_effect_id(CharEffect::LEVELUP);
-		}
-		stats.set_stat(Maplestat::LEVEL, level);
+			show_effect_id(CharEffect::Id::LEVELUP);
+
+		stats.set_stat(MapleStat::Id::LEVEL, level);
 	}
 
 	uint16_t Player::get_level() const
 	{
-		return stats.get_stat(Maplestat::LEVEL);
+		return stats.get_stat(MapleStat::Id::LEVEL);
 	}
 
 	int32_t Player::get_skilllevel(int32_t skillid) const
@@ -419,7 +423,7 @@ namespace jrc
 
 	void Player::change_job(uint16_t jobid)
 	{
-		show_effect_id(CharEffect::JOBCHANGE);
+		show_effect_id(CharEffect::Id::JOBCHANGE);
 		stats.change_job(jobid);
 	}
 
@@ -428,7 +432,7 @@ namespace jrc
 		if (seat)
 		{
 			set_position(seat->getpos());
-			set_state(Char::SIT);
+			set_state(Char::State::SIT);
 		}
 	}
 
@@ -439,27 +443,38 @@ namespace jrc
 		if (ladder)
 		{
 			phobj.set_x(ldr->get_x());
+
 			phobj.hspeed = 0.0;
 			phobj.vspeed = 0.0;
 			phobj.fhlayer = 7;
-			set_state(ldr->is_ladder() ? Char::LADDER : Char::ROPE);
-			set_direction(false);
+
+			set_state(ldr->is_ladder() ? Char::State::LADDER : Char::State::ROPE);
 		}
 	}
-	
+
+	void Player::set_climb_cooldown()
+	{
+		climb_cooldown.set_for(1000);
+	}
+
+	bool Player::can_climb()
+	{
+		return !climb_cooldown;
+	}
+
 	float Player::get_walkforce() const
 	{
-		return 0.05f + 0.11f * static_cast<float>(stats.get_total(Equipstat::SPEED)) / 100;
+		return 0.05f + 0.11f * static_cast<float>(stats.get_total(EquipStat::Id::SPEED)) / 100;
 	}
 
 	float Player::get_jumpforce() const
 	{
-		return 1.0f + 3.5f * static_cast<float>(stats.get_total(Equipstat::JUMP)) / 100;
+		return 1.0f + 3.5f * static_cast<float>(stats.get_total(EquipStat::Id::JUMP)) / 100;
 	}
 
 	float Player::get_climbforce() const
 	{
-		return static_cast<float>(stats.get_total(Equipstat::SPEED)) / 100;
+		return static_cast<float>(stats.get_total(EquipStat::Id::SPEED)) / 100;
 	}
 
 	float Player::get_flyforce() const
@@ -497,22 +512,22 @@ namespace jrc
 		return inventory;
 	}
 
-	Skillbook& Player::get_skills()
+	SkillBook& Player::get_skills()
 	{
 		return skillbook;
 	}
 
-	Questlog& Player::get_quests()
+	QuestLog& Player::get_quests()
 	{
 		return questlog;
 	}
 
-	Telerock& Player::get_telerock()
+	TeleportRock& Player::get_teleportrock()
 	{
-		return telerock;
+		return teleportrock;
 	}
 
-	Monsterbook& Player::get_monsterbook()
+	MonsterBook& Player::get_monsterbook()
 	{
 		return monsterbook;
 	}

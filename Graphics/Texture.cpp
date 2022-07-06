@@ -1,64 +1,90 @@
-/////////////////////////////////////////////////////////////////////////////
-// This file is part of the Journey MMORPG client                           //
-// Copyright © 2015-2016 Daniel Allendorf                                   //
-//                                                                          //
-// This program is free software: you can redistribute it and/or modify     //
-// it under the terms of the GNU Affero General Public License as           //
-// published by the Free Software Foundation, either version 3 of the       //
-// License, or (at your option) any later version.                          //
-//                                                                          //
-// This program is distributed in the hope that it will be useful,          //
-// but WITHOUT ANY WARRANTY; without even the implied warranty of           //
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            //
-// GNU Affero General Public License for more details.                      //
-//                                                                          //
-// You should have received a copy of the GNU Affero General Public License //
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.    //
-//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//	This file is part of the continued Journey MMORPG client					//
+//	Copyright (C) 2015-2019  Daniel Allendorf, Ryan Payton						//
+//																				//
+//	This program is free software: you can redistribute it and/or modify		//
+//	it under the terms of the GNU Affero General Public License as published by	//
+//	the Free Software Foundation, either version 3 of the License, or			//
+//	(at your option) any later version.											//
+//																				//
+//	This program is distributed in the hope that it will be useful,				//
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of				//
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the				//
+//	GNU Affero General Public License for more details.							//
+//																				//
+//	You should have received a copy of the GNU Affero General Public License	//
+//	along with this program.  If not, see <https://www.gnu.org/licenses/>.		//
+//////////////////////////////////////////////////////////////////////////////////
 #include "Texture.h"
+
 #include "GraphicsGL.h"
 
-#include "../Configuration.h"
+#ifdef USE_NX
+#include <nlnx/nx.hpp>
+#endif
 
-#include "nlnx/nx.hpp"
-
-namespace jrc
+namespace ms
 {
 	Texture::Texture(nl::node src)
 	{
 		if (src.data_type() == nl::node::type::bitmap)
 		{
-			std::string link = src["source"];
-			if (link != "")
+			origin = src["origin"];
+
+			if (src.root() == nl::nx::Map001)
 			{
-				nl::node srcfile = src;
-				while (srcfile != srcfile.root())
+				const std::string& _outlink = src["_outlink"];
+
+				if (!_outlink.empty())
 				{
-					srcfile = srcfile.root();
+					size_t first = _outlink.find_first_of('/');
+
+					if (first != std::string::npos)
+					{
+						const std::string& first_part = _outlink.substr(0, first);
+
+						if (first_part == "Map")
+						{
+							const std::string& path = _outlink.substr(first + 1);
+							nl::node foundOutlink = nl::nx::Map.resolve(path);
+
+							if (foundOutlink)
+								src = foundOutlink;
+						}
+					}
 				}
-				src = srcfile.resolve(link.substr(link.find('/') + 1));
 			}
 
 			bitmap = src;
-			origin = src["origin"];
-			dimensions = Point<int16_t>(bitmap.width(),  bitmap.height());
+			dimensions = Point<int16_t>(bitmap.width(), bitmap.height());
 
 			GraphicsGL::get().addbitmap(bitmap);
 		}
 	}
 
-	Texture::Texture() {}
-
-	Texture::~Texture() {}
-
 	void Texture::draw(const DrawArgument& args) const
 	{
-		size_t id = bitmap.id();
-		if (id == 0)
+		draw(args, Range<int16_t>(0, 0));
+	}
+
+	void Texture::draw(const DrawArgument& args, const Range<int16_t>& vertical) const
+	{
+		draw(args, vertical, Range<int16_t>(0, 0));
+	}
+
+	void Texture::draw(const DrawArgument& args, const Range<int16_t>& vertical, const Range<int16_t>& horizontal) const
+	{
+		if (!is_valid())
 			return;
 
-		GraphicsGL::get()
-			.draw(bitmap, args.get_rectangle(origin, dimensions), args.get_color(), args.get_angle());
+		GraphicsGL::get().draw(
+			bitmap,
+			args.get_rectangle(origin, dimensions),
+			vertical,
+			horizontal,
+			args.get_color(),
+			args.get_angle()
+		);
 	}
 
 	void Texture::shift(Point<int16_t> amount)

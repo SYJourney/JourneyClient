@@ -1,26 +1,27 @@
-//////////////////////////////////////////////////////////////////////////////
-// This file is part of the Journey MMORPG client                           //
-// Copyright © 2015-2016 Daniel Allendorf                                   //
-//                                                                          //
-// This program is free software: you can redistribute it and/or modify     //
-// it under the terms of the GNU Affero General Public License as           //
-// published by the Free Software Foundation, either version 3 of the       //
-// License, or (at your option) any later version.                          //
-//                                                                          //
-// This program is distributed in the hope that it will be useful,          //
-// but WITHOUT ANY WARRANTY; without even the implied warranty of           //
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            //
-// GNU Affero General Public License for more details.                      //
-//                                                                          //
-// You should have received a copy of the GNU Affero General Public License //
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.    //
-//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//	This file is part of the continued Journey MMORPG client					//
+//	Copyright (C) 2015-2019  Daniel Allendorf, Ryan Payton						//
+//																				//
+//	This program is free software: you can redistribute it and/or modify		//
+//	it under the terms of the GNU Affero General Public License as published by	//
+//	the Free Software Foundation, either version 3 of the License, or			//
+//	(at your option) any later version.											//
+//																				//
+//	This program is distributed in the hope that it will be useful,				//
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of				//
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the				//
+//	GNU Affero General Public License for more details.							//
+//																				//
+//	You should have received a copy of the GNU Affero General Public License	//
+//	along with this program.  If not, see <https://www.gnu.org/licenses/>.		//
+//////////////////////////////////////////////////////////////////////////////////
 #include "Messages.h"
 
 #include "UI.h"
-#include "UITypes/UIStatusbar.h"
 
-namespace jrc
+#include "UITypes/UIChatBar.h"
+
+namespace ms
 {
 	const EnumMap<Messages::Type, const char*> Messages::messages =
 	{
@@ -37,7 +38,6 @@ namespace jrc
 		"The item has been destroyed due to the overwhelming power of the scroll."
 	};
 
-
 	InChatMessage::InChatMessage(Messages::Type t)
 	{
 		type = t;
@@ -45,33 +45,31 @@ namespace jrc
 
 	void InChatMessage::drop() const
 	{
-		if (type == Messages::NONE)
+		if (type == Messages::Type::NONE)
 			return;
 
-		if (auto statusbar = UI::get().get_element<UIStatusbar>())
-			statusbar->display_message(type, UIChatbar::RED);
+		if (auto chatbar = UI::get().get_element<UIChatBar>())
+			chatbar->show_message(Messages::messages[type], UIChatBar::RED);
 	}
 
-
-	ForbidSkillMessage::ForbidSkillMessage(SpecialMove::ForbidReason reason, Weapon::Type weapon)
-		: InChatMessage(message_by_reason(reason, weapon)) {}
+	ForbidSkillMessage::ForbidSkillMessage(SpecialMove::ForbidReason reason, Weapon::Type weapon) : InChatMessage(message_by_reason(reason, weapon)) {}
 
 	Messages::Type ForbidSkillMessage::message_by_reason(SpecialMove::ForbidReason reason, Weapon::Type weapon)
 	{
 		switch (reason)
 		{
-		case SpecialMove::FBR_WEAPONTYPE:
-			return Messages::SKILL_WEAPONTYPE;
-		case SpecialMove::FBR_HPCOST:
-			return Messages::SKILL_HPCOST;
-		case SpecialMove::FBR_MPCOST:
-			return Messages::SKILL_MPCOST;
-		case SpecialMove::FBR_COOLDOWN:
-			return Messages::SKILL_COOLDOWN;
-		case SpecialMove::FBR_BULLETCOST:
+		case SpecialMove::ForbidReason::FBR_WEAPONTYPE:
+			return Messages::Type::SKILL_WEAPONTYPE;
+		case SpecialMove::ForbidReason::FBR_HPCOST:
+			return Messages::Type::SKILL_HPCOST;
+		case SpecialMove::ForbidReason::FBR_MPCOST:
+			return Messages::Type::SKILL_MPCOST;
+		case SpecialMove::ForbidReason::FBR_COOLDOWN:
+			return Messages::Type::SKILL_COOLDOWN;
+		case SpecialMove::ForbidReason::FBR_BULLETCOST:
 			return message_by_weapon(weapon);
 		default:
-			return Messages::NONE;
+			return Messages::Type::NONE;
 		}
 	}
 
@@ -79,13 +77,13 @@ namespace jrc
 	{
 		switch (weapon)
 		{
-		case Weapon::BOW:
-		case Weapon::CROSSBOW:
-			return Messages::SKILL_NOARROWS;
-		case Weapon::CLAW:
-			return Messages::SKILL_NOSTARS;
+		case Weapon::Type::BOW:
+		case Weapon::Type::CROSSBOW:
+			return Messages::Type::SKILL_NOARROWS;
+		case Weapon::Type::CLAW:
+			return Messages::Type::SKILL_NOSTARS;
 		default:
-			return Messages::SKILL_NOBULLETS;
+			return Messages::Type::SKILL_NOBULLETS;
 		}
 	}
 }

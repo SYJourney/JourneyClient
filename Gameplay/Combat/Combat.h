@@ -1,51 +1,51 @@
-//////////////////////////////////////////////////////////////////////////////
-// This file is part of the Journey MMORPG client                           //
-// Copyright © 2015-2016 Daniel Allendorf                                   //
-//                                                                          //
-// This program is free software: you can redistribute it and/or modify     //
-// it under the terms of the GNU Affero General Public License as           //
-// published by the Free Software Foundation, either version 3 of the       //
-// License, or (at your option) any later version.                          //
-//                                                                          //
-// This program is distributed in the hope that it will be useful,          //
-// but WITHOUT ANY WARRANTY; without even the implied warranty of           //
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            //
-// GNU Affero General Public License for more details.                      //
-//                                                                          //
-// You should have received a copy of the GNU Affero General Public License //
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.    //
-//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//	This file is part of the continued Journey MMORPG client					//
+//	Copyright (C) 2015-2019  Daniel Allendorf, Ryan Payton						//
+//																				//
+//	This program is free software: you can redistribute it and/or modify		//
+//	it under the terms of the GNU Affero General Public License as published by	//
+//	the Free Software Foundation, either version 3 of the License, or			//
+//	(at your option) any later version.											//
+//																				//
+//	This program is distributed in the hope that it will be useful,				//
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of				//
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the				//
+//	GNU Affero General Public License for more details.							//
+//																				//
+//	You should have received a copy of the GNU Affero General Public License	//
+//	along with this program.  If not, see <https://www.gnu.org/licenses/>.		//
+//////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "Attack.h"
-#include "RegularAttack.h"
-#include "Skill.h"
 
-#include "../Maplemap/MapChars.h"
-#include "../Maplemap/MapMobs.h"
+#include "RegularAttack.h"
+
+#include "../MapleMap/MapChars.h"
+#include "../MapleMap/MapMobs.h"
+#include "../MapleMap/MapReactors.h"
 
 #include "../../Character/Player.h"
 #include "../../Template/TimedQueue.h"
 
-namespace jrc
+namespace ms
 {
 	class Combat
 	{
 	public:
-		Combat(Player& player, MapChars& chars, MapMobs& mobs);
+		Combat(Player& player, MapChars& chars, MapMobs& mobs, MapReactors& reactors);
 
 		// Draw bullets, damage numbers etc.
 		void draw(double viewx, double viewy, float alpha) const;
 		// Poll attacks, damage effects, etc.
 		void update();
 
-		// Make the player use a special move.
+		// Make the player use a special move
 		void use_move(int32_t move_id);
 
-		// Add an attack to the attack queue.
+		// Add an attack to the attack queue
 		void push_attack(const AttackResult& attack);
-		// Show a buff effect.
+		// Show a buff effect
 		void show_buff(int32_t cid, int32_t skillid, int8_t level);
-		// Show a buff effect.
+		// Show a buff effect
 		void show_player_buff(int32_t skillid);
 
 	private:
@@ -68,6 +68,7 @@ namespace jrc
 
 		void apply_attack(const AttackResult& attack);
 		void apply_move(const SpecialMove& move);
+		std::vector<int32_t> find_closest(MapObjects* objs, Rectangle<int16_t> range, Point<int16_t> origin, uint8_t objcount, bool use_mobs) const;
 		void apply_use_movement(const SpecialMove& move);
 		void apply_result_movement(const SpecialMove& move, const AttackResult& result);
 		void apply_rush(const AttackResult& result);
@@ -80,6 +81,7 @@ namespace jrc
 		Player& player;
 		MapChars& chars;
 		MapMobs& mobs;
+		MapReactors& reactors;
 
 		std::unordered_map<int32_t, Skill> skills;
 		RegularAttack regularattack;

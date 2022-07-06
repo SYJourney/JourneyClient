@@ -1,90 +1,110 @@
-//////////////////////////////////////////////////////////////////////////////
-// This file is part of the Journey MMORPG client                           //
-// Copyright © 2015-2016 Daniel Allendorf                                   //
-//                                                                          //
-// This program is free software: you can redistribute it and/or modify     //
-// it under the terms of the GNU Affero General Public License as           //
-// published by the Free Software Foundation, either version 3 of the       //
-// License, or (at your option) any later version.                          //
-//                                                                          //
-// This program is distributed in the hope that it will be useful,          //
-// but WITHOUT ANY WARRANTY; without even the implied warranty of           //
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            //
-// GNU Affero General Public License for more details.                      //
-//                                                                          //
-// You should have received a copy of the GNU Affero General Public License //
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.    //
-//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//	This file is part of the continued Journey MMORPG client					//
+//	Copyright (C) 2015-2019  Daniel Allendorf, Ryan Payton						//
+//																				//
+//	This program is free software: you can redistribute it and/or modify		//
+//	it under the terms of the GNU Affero General Public License as published by	//
+//	the Free Software Foundation, either version 3 of the License, or			//
+//	(at your option) any later version.											//
+//																				//
+//	This program is distributed in the hope that it will be useful,				//
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of				//
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the				//
+//	GNU Affero General Public License for more details.							//
+//																				//
+//	You should have received a copy of the GNU Affero General Public License	//
+//	along with this program.  If not, see <https://www.gnu.org/licenses/>.		//
+//////////////////////////////////////////////////////////////////////////////////
 #pragma once
+
 #include <cstdint>
 
-namespace jrc
+namespace ms
 {
 	namespace KeyAction
 	{
-		//Maple-specific keycodes, sent via the Keymap Packet.
+		// Maple-specific keycodes, sent via the Keymap Packet.
 		enum Id : int32_t
 		{
-			EQUIPS = 0,
-			INVENTORY = 1,
-			CHARSTATS = 2,
-			SKILLBOOK = 3,
-			BUDDYLIST = 4,
-			WORLDMAP = 5,
-			MESSAGE = 6,
-			MINIMAP = 7,
-			QUESTLOG = 8,
-			KEYCONFIG = 9,
-			CHATALL = 10,
-			WHISPER = 11,
-			CHATPT = 12,
-			CHATBUDDY = 13,
-			MAINMENU = 14,
-			TOGGLEQS = 15,
-			CHATWINDOW = 16,
-			GUILD = 17,
-			CHATGUILD = 18,
-			PARTY = 19,
-			HELPER = 20,
-			CHATSPOUSE = 21,
-			MONSTERBOOK = 22,
-			CASHSHOP = 23,
-			CHATALLIANCE = 24,
-			PARTYSEARCH = 25,
-			FAMILY = 26,
-			GMSMEDALS = 27,
-			BOSS = 28,
-			CHATSQUAD = 29,
-			PROFESSION = 30,
-			ITEMPOT = 31,
-			EVENT = 32,
-			WHEEL = 33,
-			LEVELGUIDE = 34,
-			CRUSADE = 35,
-			BITS = 36,
-			KNOWHOW = 37,
-			EPISODE = 38,
+			EQUIPMENT,
+			ITEMS,
+			STATS,
+			SKILLS,
+			FRIENDS,
+			WORLDMAP,
+			MAPLECHAT,
+			MINIMAP,
+			QUESTLOG,
+			KEYBINDINGS,
+			SAY,
+			WHISPER,
+			PARTYCHAT,
+			FRIENDSCHAT,
+			MENU,
+			QUICKSLOTS,
+			TOGGLECHAT,
+			GUILD,
+			GUILDCHAT,
+			PARTY,
+			NOTIFIER,
+			MAPLENEWS,			// TOSPOUSE (v83)
+			CASHSHOP,			// MONSTERBOOK (v83)
+			ALLIANCECHAT,		// CASHSHOP (v83)
+			//NONE = 24,		// TOALLIANCE (v83)
+			MANAGELEGION = 25,	// PARTYSEARCH (v83)
+			MEDALS,				// FAMILY (v83)
+			BOSSPARTY,			// MEDAL (v83)
+			PROFESSION = 29,
+			ITEMPOT,
+			EVENT,
+			SILENTCRUSADE = 33,
+			BITS,
+			BATTLEANALYSIS,
 			GUIDE = 39,
-			EQUIPENHANCE = 40,
-			EQUIPENHANCE2 = 41,
-			PICKUP = 50,
-			SIT = 51,
-			ATTACK = 52,
-			JUMP = 53,
-			NPCCHAT = 54,
-			LEFT = 60,
-			RIGHT = 61,
-			UP = 62,
-			DOWN = 63,
-			BACK = 64,
-			RETURN = 65,
-			SPACE = 66,
-			TAB = 67,
-			COPY = 68,
-			PASTE = 69,
-			NOACTION = 70,
+			VIEWERSCHAT,
+			ENHANCEEQUIP,
+			MONSTERCOLLECTION,
+			SOULWEAPON,
+			CHARINFO,
+			CHANGECHANNEL,
+			MAINMENU,
+			SCREENSHOT,
+			PICTUREMODE,
+			MAPLEACHIEVEMENT,
+			PICKUP,
+			SIT,
+			ATTACK,
+			JUMP,
+			INTERACT_HARVEST,
 			FACE1 = 100,
-			FACE7 = 106
+			FACE2,
+			FACE3,
+			FACE4,
+			FACE5,
+			FACE6,
+			FACE7,
+			MAPLESTORAGE = 200,
+			SAFEMODE,
+			MUTE,
+			MAPLERELAY = 300,
+			FAMILIAR = 1000,
+			TOSPOUSE,
+			// Static keys
+			LEFT,
+			RIGHT,
+			UP,
+			DOWN,
+			BACK,
+			TAB,
+			RETURN,
+			ESCAPE,
+			SPACE,
+			DELETE,
+			HOME,
+			END,
+			COPY,
+			PASTE,
+			LENGTH
 		};
 
 		inline Id actionbyid(int32_t id)

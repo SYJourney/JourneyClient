@@ -1,25 +1,25 @@
-/////////////////////////////////////////////////////////////////////////////
-// This file is part of the Journey MMORPG client                           //
-// Copyright © 2015-2016 Daniel Allendorf                                   //
-//                                                                          //
-// This program is free software: you can redistribute it and/or modify     //
-// it under the terms of the GNU Affero General Public License as           //
-// published by the Free Software Foundation, either version 3 of the       //
-// License, or (at your option) any later version.                          //
-//                                                                          //
-// This program is distributed in the hope that it will be useful,          //
-// but WITHOUT ANY WARRANTY; without even the implied warranty of           //
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            //
-// GNU Affero General Public License for more details.                      //
-//                                                                          //
-// You should have received a copy of the GNU Affero General Public License //
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.    //
-//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//	This file is part of the continued Journey MMORPG client					//
+//	Copyright (C) 2015-2019  Daniel Allendorf, Ryan Payton						//
+//																				//
+//	This program is free software: you can redistribute it and/or modify		//
+//	it under the terms of the GNU Affero General Public License as published by	//
+//	the Free Software Foundation, either version 3 of the License, or			//
+//	(at your option) any later version.											//
+//																				//
+//	This program is distributed in the hope that it will be useful,				//
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of				//
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the				//
+//	GNU Affero General Public License for more details.							//
+//																				//
+//	You should have received a copy of the GNU Affero General Public License	//
+//	along with this program.  If not, see <https://www.gnu.org/licenses/>.		//
+//////////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-namespace jrc
+namespace ms
 {
-	// Error codes to be checked after initialisation.
+	// Error codes to be checked after initialization
 	class Error
 	{
 	public:
@@ -28,6 +28,7 @@ namespace jrc
 			NONE,
 			CONNECTION,
 			NLNX,
+			WZ,
 			MISSING_FILE,
 			WRONG_UI_FILE,
 			GLFW,
@@ -35,27 +36,27 @@ namespace jrc
 			FREETYPE,
 			VERTEX_SHADER,
 			FRAGMENT_SHADER,
-			SHADER_PROGRAM,
+			SHADER_PROGRAM_LINK,
+			SHADER_PROGRAM_VALID,
 			SHADER_VARS,
 			WINDOW,
 			AUDIO,
+			MISSING_ICON,
+			FONT_PATH,
 			LENGTH
 		};
 
-		constexpr Error(Code c)
-			: Error(c, "") {}
-
-		constexpr Error(Code c, const char* args)
-			: code(c), args(args) {}
+		constexpr Error(Code c) : Error(c, "") {}
+		constexpr Error(Code c, const char* args) : code(c), args(args) {}
 
 		constexpr operator bool() const
 		{
-			return code != NONE;
+			return code != Code::NONE;
 		}
 
 		constexpr bool can_retry() const
 		{
-			return code == CONNECTION || code == MISSING_FILE;
+			return code == Code::CONNECTION || code == Code::MISSING_FILE || code == Code::WRONG_UI_FILE || code == Code::MISSING_ICON || code == Code::FONT_PATH;
 		}
 
 		constexpr const char* get_message() const
@@ -72,22 +73,26 @@ namespace jrc
 		Code code;
 		const char* args;
 
-		static constexpr const char* messages[LENGTH] =
+		static constexpr const char* messages[Code::LENGTH] =
 		{
 			"",
-			"The server seems to be offline. Please start the server and enter 'retry'.",
-			"Could not initialize nlnx. Message: ",
+			"Cannot connect to server.",
+			"Could not initialize NLNX.",
+			"Could not initialize WZ.",
 			"Missing a game file: ",
 			"UI.nx has wrong version.",
-			"Could not initialize glfw.",
-			"Could not initialize glew.",
-			"Could not initialize freetype.",
-			"Failed to create vertex shader.",
-			"Failed to create fragment shader.",
-			"Failed to create shader program.",
+			"Could not initialize GLFW.",
+			"Could not initialize GLEW.",
+			"Could not initialize FreeType.",
+			"Failed to compile vertex shader.",
+			"Failed to compile fragment shader.",
+			"Failed to link shader program.",
+			"Failed to validate shader program.",
 			"Failed to locate shader variables.",
 			"Failed to create window.",
-			"Failed to initialize audio"
+			"Failed to initialize audio.",
+			"Could not load icon.",
+			"Could not load fonts."
 		};
 	};
 }

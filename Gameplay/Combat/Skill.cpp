@@ -1,46 +1,44 @@
-/////////////////////////////////////////////////////////////////////////////
-// This file is part of the Journey MMORPG client                           //
-// Copyright © 2015-2016 Daniel Allendorf                                   //
-//                                                                          //
-// This program is free software: you can redistribute it and/or modify     //
-// it under the terms of the GNU Affero General Public License as           //
-// published by the Free Software Foundation, either version 3 of the       //
-// License, or (at your option) any later version.                          //
-//                                                                          //
-// This program is distributed in the hope that it will be useful,          //
-// but WITHOUT ANY WARRANTY; without even the implied warranty of           //
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            //
-// GNU Affero General Public License for more details.                      //
-//                                                                          //
-// You should have received a copy of the GNU Affero General Public License //
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.    //
-//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//	This file is part of the continued Journey MMORPG client					//
+//	Copyright (C) 2015-2019  Daniel Allendorf, Ryan Payton						//
+//																				//
+//	This program is free software: you can redistribute it and/or modify		//
+//	it under the terms of the GNU Affero General Public License as published by	//
+//	the Free Software Foundation, either version 3 of the License, or			//
+//	(at your option) any later version.											//
+//																				//
+//	This program is distributed in the hope that it will be useful,				//
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of				//
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the				//
+//	GNU Affero General Public License for more details.							//
+//																				//
+//	You should have received a copy of the GNU Affero General Public License	//
+//	along with this program.  If not, see <https://www.gnu.org/licenses/>.		//
+//////////////////////////////////////////////////////////////////////////////////
 #include "Skill.h"
 
 #include "../../Character/SkillId.h"
 #include "../../Data/SkillData.h"
 #include "../../Util/Misc.h"
 
-#include "nlnx/node.hpp"
-#include "nlnx/nx.hpp"
+#ifdef USE_NX
+#include <nlnx/nx.hpp>
+#endif
 
-namespace jrc
+namespace ms
 {
-	Skill::Skill(int32_t id)
-		: skillid(id) {
-
+	Skill::Skill(int32_t id) : skillid(id)
+	{
 		const SkillData& data = SkillData::get(skillid);
 
 		std::string strid;
+
 		if (skillid < 10000000)
-		{
 			strid = string_format::extend_id(skillid, 7);
-		}
 		else
-		{
 			strid = std::to_string(skillid);
-		}
-		nl::node src = nl::nx::skill[strid.substr(0, 3) + ".img"]["skill"][strid];
+
+		nl::node src = nl::nx::Skill[strid.substr(0, 3) + ".img"]["skill"][strid];
 
 		projectile = true;
 		overregular = false;
@@ -49,6 +47,7 @@ namespace jrc
 
 		bool byleveleffect = src["CharLevel"]["10"]["effect"].size() > 0;
 		bool multieffect = src["effect0"].size() > 0;
+
 		if (byleveleffect)
 		{
 			useeffect = std::make_unique<ByLevelUseEffect>(src);
@@ -61,13 +60,14 @@ namespace jrc
 		{
 			bool isanimation = src["effect"]["0"].data_type() == nl::node::type::bitmap;
 			bool haseffect1 = src["effect"]["1"].size() > 0;
+
 			if (isanimation)
 			{
 				useeffect = std::make_unique<SingleUseEffect>(src);
 			}
 			else if (haseffect1)
 			{
-				useeffect = std::make_unique<TwoHUseEffect>(src);
+				useeffect = std::make_unique<TwoHandedUseEffect>(src);
 			}
 			else
 			{
@@ -79,6 +79,7 @@ namespace jrc
 					break;
 				default:
 					useeffect = std::make_unique<NoUseEffect>();
+					break;
 				}
 			}
 		}
@@ -87,16 +88,13 @@ namespace jrc
 		bool byskilllevelhit = src["level"]["1"]["hit"].size() > 0;
 		bool hashit0 = src["hit"]["0"].size() > 0;
 		bool hashit1 = src["hit"]["1"].size() > 0;
+
 		if (bylevelhit)
 		{
 			if (hashit0 && hashit1)
-			{
 				hiteffect = std::make_unique<ByLevelTwoHHitEffect>(src);
-			}
 			else
-			{
 				hiteffect = std::make_unique<ByLevelHitEffect>(src);
-			}
 		}
 		else if (byskilllevelhit)
 		{
@@ -104,7 +102,7 @@ namespace jrc
 		}
 		else if (hashit0 && hashit1)
 		{
-			hiteffect = std::make_unique<TwoHHitEffect>(src);
+			hiteffect = std::make_unique<TwoHandedHitEffect>(src);
 		}
 		else if (hashit0)
 		{
@@ -117,9 +115,10 @@ namespace jrc
 
 		bool hasaction0 = src["action"]["0"].data_type() == nl::node::type::string;
 		bool hasaction1 = src["action"]["1"].data_type() == nl::node::type::string;
+
 		if (hasaction0 && hasaction1)
 		{
-			action = std::make_unique<TwoHAction>(src);
+			action = std::make_unique<TwoHandedAction>(src);
 		}
 		else if (hasaction0)
 		{
@@ -128,6 +127,7 @@ namespace jrc
 		else if (data.is_attack())
 		{
 			bool bylevel = src["level"]["1"]["action"].data_type() == nl::node::type::string;
+
 			if (bylevel)
 			{
 				action = std::make_unique<ByLevelAction>(src, skillid);
@@ -145,6 +145,7 @@ namespace jrc
 
 		bool hasball = src["ball"].size() > 0;
 		bool bylevelball = src["level"]["1"]["ball"].size() > 0;
+
 		if (bylevelball)
 		{
 			bullet = std::make_unique<BySkillLevelBullet>(src, skillid);
@@ -195,6 +196,7 @@ namespace jrc
 			attack.maxdamage *= stats.damage;
 			attack.damagetype = Attack::DMG_WEAPON;
 		}
+
 		attack.critical += stats.critical;
 		attack.ignoredef += stats.ignoredef;
 		attack.mobcount = stats.mobcount;
@@ -207,6 +209,7 @@ namespace jrc
 			break;
 		default:
 			attack.hitcount = stats.attackcount;
+			break;
 		}
 
 		if (!stats.range.empty())
@@ -232,16 +235,16 @@ namespace jrc
 				break;
 			default:
 				attack.bullet = skillid;
+				break;
 			}
 		}
 
 		if (overregular)
 		{
 			attack.stance = user.get_look().get_stance();
+
 			if (attack.type == Attack::CLOSE && !projectile)
-			{
 				attack.range = user.get_afterimage().get_range();
-			}
 		}
 	}
 
@@ -272,9 +275,8 @@ namespace jrc
 		return skillid;
 	}
 
-	SpecialMove::ForbidReason Skill::can_use(int32_t level, Weapon::Type weapon,
-		const Job& job, uint16_t hp, uint16_t mp, uint16_t bullets) const {
-
+	SpecialMove::ForbidReason Skill::can_use(int32_t level, Weapon::Type weapon, const Job& job, uint16_t hp, uint16_t mp, uint16_t bullets) const
+	{
 		if (level <= 0 || level > SkillData::get(skillid).get_masterlevel())
 			return FBR_OTHER;
 
@@ -290,6 +292,7 @@ namespace jrc
 			return FBR_MPCOST;
 
 		Weapon::Type reqweapon = SkillData::get(skillid).get_required_weapon();
+
 		if (weapon != reqweapon && reqweapon != Weapon::NONE)
 			return FBR_WEAPONTYPE;
 

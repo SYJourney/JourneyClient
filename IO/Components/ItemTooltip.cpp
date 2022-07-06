@@ -1,40 +1,45 @@
-//////////////////////////////////////////////////////////////////////////////
-// This file is part of the Journey MMORPG client                           //
-// Copyright © 2015-2016 Daniel Allendorf                                   //
-//                                                                          //
-// This program is free software: you can redistribute it and/or modify     //
-// it under the terms of the GNU Affero General Public License as           //
-// published by the Free Software Foundation, either version 3 of the       //
-// License, or (at your option) any later version.                          //
-//                                                                          //
-// This program is distributed in the hope that it will be useful,          //
-// but WITHOUT ANY WARRANTY; without even the implied warranty of           //
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            //
-// GNU Affero General Public License for more details.                      //
-//                                                                          //
-// You should have received a copy of the GNU Affero General Public License //
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.    //
-//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//	This file is part of the continued Journey MMORPG client					//
+//	Copyright (C) 2015-2019  Daniel Allendorf, Ryan Payton						//
+//																				//
+//	This program is free software: you can redistribute it and/or modify		//
+//	it under the terms of the GNU Affero General Public License as published by	//
+//	the Free Software Foundation, either version 3 of the License, or			//
+//	(at your option) any later version.											//
+//																				//
+//	This program is distributed in the hope that it will be useful,				//
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of				//
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the				//
+//	GNU Affero General Public License for more details.							//
+//																				//
+//	You should have received a copy of the GNU Affero General Public License	//
+//	along with this program.  If not, see <https://www.gnu.org/licenses/>.		//
+//////////////////////////////////////////////////////////////////////////////////
 #include "ItemTooltip.h"
+
+#include "../../Constants.h"
 
 #include "../../Data/ItemData.h"
 
-#include "nlnx/nx.hpp"
-#include "nlnx/node.hpp"
+#ifdef USE_NX
+#include <nlnx/nx.hpp>
+#endif
 
-namespace jrc
+namespace ms
 {
+	// TODO: Add blue dot next to name
 	ItemTooltip::ItemTooltip()
 	{
-		nl::node itemtt = nl::nx::ui["UIToolTip.img"]["Item"];
+		nl::node Item = nl::nx::UI["UIToolTip.img"]["Item"];
+		nl::node Frame = Item["Frame2"];
+		nl::node ItemIcon = Item["ItemIcon"];
 
-		top = itemtt["Frame"]["top"];
-		mid = itemtt["Frame"]["line"];
-		line = itemtt["Frame"]["dotline"];
-		bot = itemtt["Frame"]["bottom"];
-		base = itemtt["ItemIcon"]["base"];
-		cover = itemtt["ItemIcon"]["cover"];
-		shade = itemtt["ItemIcon"]["shade"];
+		frame = Frame;
+		cover = Frame["cover"];
+		base = ItemIcon["base"];
+		itemcover = ItemIcon["cover"];
+		type[true] = ItemIcon["new"];
+		type[false] = ItemIcon["old"];
 
 		itemid = 0;
 	}
@@ -52,13 +57,30 @@ namespace jrc
 		const ItemData& idata = ItemData::get(itemid);
 
 		itemicon = idata.get_icon(false);
-		name = { Text::A12B, Text::CENTER, Text::WHITE, idata.get_name(), 240 };
-		desc = { Text::A12M, Text::LEFT, Text::WHITE, idata.get_desc(), 150 };
+		untradable = idata.is_untradable();
+		unique = idata.is_unique();
 
-		filllength = 81 + name.height();
-		int16_t descdelta = desc.height() - 80;
+		std::string quality = "";
+
+		if (unique && untradable)
+			quality = "One-of-a-kind Item, Untradable";
+		else if (unique && !untradable)
+			quality = "One-of-a-kind Item";
+		else if (!unique && untradable)
+			quality = "Untradable";
+		else
+			quality = "";
+
+		name = Text(Text::Font::A12B, Text::Alignment::LEFT, Color::Name::WHITE, idata.get_name(), 240);
+		desc = Text(Text::Font::A12M, Text::Alignment::LEFT, Color::Name::WHITE, idata.get_desc(), 185);
+		qual = Text(Text::Font::A12M, Text::Alignment::CENTER, Color::Name::ORANGE, quality, 185);
+
+		fillwidth = 264;
+		fillheight = 83 + name.height();
+		descdelta = desc.height() - 80;
+
 		if (descdelta > 0)
-			filllength += descdelta;
+			fillheight += descdelta;
 
 		return true;
 	}
@@ -68,19 +90,36 @@ namespace jrc
 		if (itemid == 0)
 			return;
 
-		top.draw(pos);
-		mid.draw({ pos + Point<int16_t>(0, 13), Point<int16_t>(0, filllength) });
-		bot.draw(pos + Point<int16_t>(0, filllength + 13));
+		int16_t max_width = Constants::Constants::get().get_viewwidth();
+		int16_t max_height = Constants::Constants::get().get_viewheight();
+		int16_t cur_width = pos.x() + fillwidth + 32;
+		int16_t cur_height = pos.y() + fillheight + 40;
 
-		name.draw(pos + Point<int16_t>(130, 3));
+		int16_t adj_x = cur_width - max_width;
+		int16_t adj_y = cur_height - max_height;
 
-		pos.shift_y(4 + name.height());
+		int16_t adj_d = descdelta > 0 ? descdelta : 0;
+		int16_t adj_t = (untradable || unique) ? 19 : 0;
 
-		base.draw(pos + Point<int16_t>(10, 10));
-		shade.draw(pos + Point<int16_t>(10, 10));
-		itemicon.draw({ pos + Point<int16_t>(20, 82), 2.0f, 2.0f });
-		cover.draw(pos + Point<int16_t>(10, 10));
+		if (adj_x > 0)
+			pos.shift_x(adj_x * -1);
 
-		desc.draw(pos + Point<int16_t>(100, 6));
+		if (adj_y > 0)
+			pos.shift_y(adj_y * -1);
+
+		frame.draw(pos + Point<int16_t>(150, 118 + adj_d + adj_t), fillwidth, fillheight + adj_t);
+		cover.draw(pos + Point<int16_t>(4, 4));
+		name.draw(pos + Point<int16_t>(22, 8));
+
+		if (untradable || unique)
+			qual.draw(pos + Point<int16_t>(148, 27));
+
+		pos.shift(14, 18 + name.height() + adj_t);
+
+		base.draw(pos);
+		type[true].draw(pos);
+		itemicon.draw(DrawArgument(pos + Point<int16_t>(8, 72), 2.0f, 2.0f));
+		itemcover.draw(pos);
+		desc.draw(pos + Point<int16_t>(90, -6));
 	}
 }

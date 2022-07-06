@@ -1,64 +1,60 @@
-//////////////////////////////////////////////////////////////////////////////
-// This file is part of the Journey MMORPG client                           //
-// Copyright © 2015-2016 Daniel Allendorf                                   //
-//                                                                          //
-// This program is free software: you can redistribute it and/or modify     //
-// it under the terms of the GNU Affero General Public License as           //
-// published by the Free Software Foundation, either version 3 of the       //
-// License, or (at your option) any later version.                          //
-//                                                                          //
-// This program is distributed in the hope that it will be useful,          //
-// but WITHOUT ANY WARRANTY; without even the implied warranty of           //
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            //
-// GNU Affero General Public License for more details.                      //
-//                                                                          //
-// You should have received a copy of the GNU Affero General Public License //
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.    //
-//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//	This file is part of the continued Journey MMORPG client					//
+//	Copyright (C) 2015-2019  Daniel Allendorf, Ryan Payton						//
+//																				//
+//	This program is free software: you can redistribute it and/or modify		//
+//	it under the terms of the GNU Affero General Public License as published by	//
+//	the Free Software Foundation, either version 3 of the License, or			//
+//	(at your option) any later version.											//
+//																				//
+//	This program is distributed in the hope that it will be useful,				//
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of				//
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the				//
+//	GNU Affero General Public License for more details.							//
+//																				//
+//	You should have received a copy of the GNU Affero General Public License	//
+//	along with this program.  If not, see <https://www.gnu.org/licenses/>.		//
+//////////////////////////////////////////////////////////////////////////////////
 #include "SkillData.h"
 
 #include "../Character/SkillId.h"
 #include "../Util/Misc.h"
 
-#include <unordered_set>
+#ifdef USE_NX
+#include <nlnx/nx.hpp>
+#endif
 
-#include "nlnx/nx.hpp"
-#include "nlnx/node.hpp"
-
-namespace jrc
+namespace ms
 {
 	SkillData::SkillData(int32_t id)
 	{
-		// Locate sources
+		/// Locate sources
 		std::string strid = string_format::extend_id(id, 7);
-		nl::node src = nl::nx::skill[strid.substr(0, 3) + ".img"]["skill"][strid];
-		nl::node strsrc = nl::nx::string["Skill.img"][strid];
+		std::string jobid = strid.substr(0, 3);
+		nl::node src = nl::nx::Skill[jobid + ".img"]["skill"][strid];
+		nl::node strsrc = nl::nx::String["Skill.img"][strid];
 
-
-		// Load icons
+		/// Load icons
 		icons = { src["icon"], src["iconDisabled"], src["iconMouseOver"] };
 
-
-		// Load strings
+		/// Load strings
 		name = strsrc["name"];
 		desc = strsrc["desc"];
 
 		for (int32_t level = 1; nl::node sub = strsrc["h" + std::to_string(level)]; level++)
-		{
 			levels.emplace(level, sub);
-		}
 
-
-		// Load stats
+		/// Load stats
 		nl::node levelsrc = src["level"];
+
 		for (auto sub : levelsrc)
 		{
 			float damage = (float)sub["damage"] / 100;
 			int32_t matk = sub["mad"];
 			int32_t fixdamage = sub["fixdamage"];
 			int32_t mastery = sub["mastery"];
-			uint8_t  attackcount = (uint8_t)sub["attackCount"].get_integer(1);
-			uint8_t  mobcount = (uint8_t)sub["mobCount"].get_integer(1);
+			uint8_t attackcount = (uint8_t)sub["attackCount"].get_integer(1);
+			uint8_t mobcount = (uint8_t)sub["mobCount"].get_integer(1);
 			uint8_t bulletcount = (uint8_t)sub["bulletCount"].get_integer(1);
 			int16_t bulletcost = (int16_t)sub["bulletConsume"].get_integer(bulletcount);
 			int32_t hpcost = sub["hpCon"];
@@ -69,20 +65,36 @@ namespace jrc
 			float hrange = (float)sub["range"].get_real(100.0) / 100;
 			Rectangle<int16_t> range = sub;
 			int32_t level = string_conversion::or_default<int32_t>(sub.name(), -1);
+
 			stats.emplace(
 				std::piecewise_construct,
 				std::forward_as_tuple(level),
-				std::forward_as_tuple(damage, matk, fixdamage, mastery, attackcount, mobcount,
-					bulletcount, bulletcost, hpcost, mpcost, chance, critical, ignoredef, hrange, range)
+				std::forward_as_tuple(damage, matk, fixdamage, mastery, attackcount, mobcount, bulletcount, bulletcost, hpcost, mpcost, chance, critical, ignoredef, hrange, range)
 			);
 		}
 
 		element = src["elemAttr"];
-		reqweapon = Weapon::by_value(100 + (int32_t)src["weapon"]);
+
+		if (jobid == "900" || jobid == "910")
+			reqweapon = Weapon::Type::NONE;
+		else
+			reqweapon = Weapon::by_value(100 + (int32_t)src["weapon"]);
+
 		masterlevel = static_cast<int32_t>(stats.size());
 		passive = (id % 10000) / 1000 == 0;
 		flags = flags_of(id);
 		invisible = src["invisible"].get_bool();
+
+		/// Load required skills
+		nl::node reqsrc = src["req"];
+
+		for (auto sub : reqsrc)
+		{
+			int32_t skillid = string_conversion::or_default<int32_t>(sub.name(), -1);
+			int32_t reqlv = sub.get_integer();
+
+			reqskills.emplace(skillid, reqlv);
+		}
 	}
 
 	int32_t SkillData::flags_of(int32_t id) const
@@ -133,13 +145,14 @@ namespace jrc
 			{ SkillId::POISON_BREATH, ATTACK },
 			{ SkillId::SEAL_FP, ATTACK },
 			{ SkillId::ELEMENT_COMPOSITION_FP, ATTACK | RANGED },
-			//
+			// TODO: Blank?
 			{ SkillId::FIRE_DEMON, ATTACK },
 			{ SkillId::PARALYZE, ATTACK | RANGED },
 			{ SkillId::METEOR_SHOWER, ATTACK }
 		};
 
 		auto iter = skill_flags.find(id);
+
 		if (iter == skill_flags.end())
 			return NONE;
 
@@ -174,12 +187,14 @@ namespace jrc
 	const SkillData::Stats& SkillData::get_stats(int32_t level) const
 	{
 		auto iter = stats.find(level);
+
 		if (iter == stats.end())
 		{
-			static constexpr Stats null_stats{ 0.0f, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0.0f, 0.0f, 0.0f, 0.0f, {} };
+			static constexpr Stats null_stats = Stats(0.0f, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0f, 0.0f, 0.0f, 0.0f, Rectangle<int16_t>());
+
 			return null_stats;
 		}
+
 		return iter->second;
 	}
 
@@ -196,9 +211,11 @@ namespace jrc
 	const std::string& SkillData::get_level_desc(int32_t level) const
 	{
 		auto iter = levels.find(level);
+
 		if (iter == levels.end())
 		{
 			static const std::string null_level = "Missing level description.";
+
 			return null_level;
 		}
 		else
@@ -210,5 +227,10 @@ namespace jrc
 	const Texture& SkillData::get_icon(Icon icon) const
 	{
 		return icons[icon];
+	}
+
+	const std::unordered_map<int32_t, int32_t>& SkillData::get_reqskills() const
+	{
+		return reqskills;
 	}
 }
